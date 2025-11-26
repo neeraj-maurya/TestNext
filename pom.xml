@@ -11,6 +11,8 @@
     <spring.boot.version>3.5.0</spring.boot.version>
     <spring-cloud.version>2024.0.0</spring-cloud.version>
     <native.maven.plugin.version>0.10.2</native.maven.plugin.version>
+    <!-- quality.strict: set to true in CI to fail builds on SpotBugs/Checkstyle issues -->
+    <quality.strict>false</quality.strict>
   </properties>
 
   <parent>
@@ -170,6 +172,28 @@
         <artifactId>native-maven-plugin</artifactId>
         <version>${native.maven.plugin.version}</version>
         <extensions>true</extensions>
+      </plugin>
+      <!-- Code quality: Checkstyle -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.2.0</version>
+        <configuration>
+          <!-- set to true to fail the build when style violations exist -->
+          <failsOnError>${quality.strict}</failsOnError>
+          <configLocation>google_checks.xml</configLocation>
+          <encoding>UTF-8</encoding>
+          <consoleOutput>true</consoleOutput>
+        </configuration>
+        <executions>
+          <execution>
+            <id>checkstyle-validation</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

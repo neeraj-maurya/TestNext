@@ -19,7 +19,7 @@ services:
   app:
     build: .
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/testnext
       SPRING_DATASOURCE_USERNAME: testnext
       SPRING_DATASOURCE_PASSWORD: password

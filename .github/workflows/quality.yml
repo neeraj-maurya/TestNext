@@ -31,9 +31,6 @@ jobs:
         run: mvn -B -DskipTests verify
 
       # Run SpotBugs if plugin is available (non-fatal)
-      - name: SpotBugs analysis (optional)
-        run: mvn -B com.github.spotbugs:spotbugs-maven-plugin:4.7.3:check || true
-
       # Run Checkstyle if configured (non-fatal)
-      - name: Checkstyle analysis (optional)
-        run: mvn -B org.apache.maven.plugins:maven-checkstyle-plugin:3.2.0:check || true
+        - name: Run Maven verify (includes SpotBugs/Checkstyle when configured)
+          run: mvn -B -DskipTests verify
