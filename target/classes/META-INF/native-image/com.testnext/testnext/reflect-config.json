@@ -1,0 +1,58 @@
+{
+  "bundles": [
+    {
+      "name": "reflect-config",
+      "resources": [
+        {
+          "pattern": ".*"
+        }
+      ]
+    }
+  ],
+  "reflection": [
+    {
+      "name": "com.testnext.TestNextApplication",
+      "queryAllDeclaredConstructors": true,
+      "queryAllPublicMethods": true,
+      "allDeclaredFields": true,
+      "allPublicFields": true
+    },
+    {
+      "name": "com.testnext.model.ExecutionEntity",
+      "queryAllDeclaredConstructors": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.testnext.model.ExecutionStepEntity",
+      "queryAllDeclaredConstructors": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "jakarta.persistence.Entity",
+      "queryAllDeclaredMethods": true
+    }
+  ],
+  "serialization": [
+    {
+      "name": "com.testnext.execution.dto.ExecutionDto",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allDeclaredFields": true,
+      "allPublicFields": true
+    },
+    {
+      "name": "com.testnext.execution.dto.ExecutionStepDto",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allDeclaredFields": true,
+      "allPublicFields": true
+    }
+  ],
+  "proxies": [
+    {
+      "interfaces": [
+        "com.testnext.execution.ExecutionRepositoryI"
+      ]
+    }
+  ]
+}

@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: testnext
+    description: TestNext - Multi-tenant test automation platform
   datasource:
     url: jdbc:postgresql://localhost:5432/testnext
     username: testnext
@@ -6,5 +9,28 @@ spring:
     driver-class-name: org.postgresql.Driver
   flyway:
     enabled: false # we'll run tenant migrations programmatically per schema
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+# Observability and monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
 
 # Security and other configs to be added

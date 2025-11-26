@@ -17,6 +17,7 @@ C:\Users\neera\VSCodeProjects\TestNext\src\main\java\com\testnext\api\controller
 C:\Users\neera\VSCodeProjects\TestNext\src\main\java\com\testnext\repository\TenantRepository.java
 C:\Users\neera\VSCodeProjects\TestNext\src\main\java\com\testnext\execution\dto\RerunRequest.java
 C:\Users\neera\VSCodeProjects\TestNext\src\main\java\com\testnext\execution\TestStepRepository.java
+C:\Users\neera\VSCodeProjects\TestNext\src\main\java\com\testnext\observability\ObservabilityConfig.java
 C:\Users\neera\VSCodeProjects\TestNext\src\main\java\com\testnext\service\TestService.java
 C:\Users\neera\VSCodeProjects\TestNext\src\main\java\com\testnext\project\package-info.java
 C:\Users\neera\VSCodeProjects\TestNext\src\main\java\com\testnext\security\SecurityConfig.java
