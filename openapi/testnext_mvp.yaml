@@ -1,0 +1,356 @@
+openapi: 3.0.3
+info:
+  title: TestNext MVP API
+  version: 0.1.0
+  description: OpenAPI spec for the TestNext MVP (tenants, projects, step-definitions, tests, executions, audit)
+servers:
+  - url: http://localhost:8080
+    description: Local dev server
+paths:
+  /api/auth/login:
+    post:
+      summary: Obtain JWT for a user (dev-mode stub or real auth provider)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        '200':
+          description: JWT token response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+  /api/tenants:
+    post:
+      summary: Create tenant (schema-per-tenant)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                schema_name:
+                  type: string
+      responses:
+        '201':
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+    get:
+      summary: List tenants (system admin)
+      responses:
+        '200':
+          description: Tenant list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tenant'
+  /api/tenants/{tenantId}/projects:
+    post:
+      summary: Create project under tenant
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+    get:
+      summary: List projects for tenant
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Project list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+  /api/tenants/{tenantId}/step-definitions:
+    post:
+      summary: Register a step definition for tenant
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                input_schema:
+                  type: object
+                output_schema:
+                  type: object
+      responses:
+        '201':
+          description: Step definition created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StepDefinition'
+    get:
+      summary: List step definitions for tenant
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Step definition list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StepDefinition'
+  /api/projects/{projectId}/test-suites:
+    post:
+      summary: Create test suite
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Test suite created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestSuite'
+  /api/test-suites/{suiteId}/tests:
+    post:
+      summary: Create a test under a suite
+      parameters:
+        - in: path
+          name: suiteId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                steps:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      stepDefinitionId:
+                        type: integer
+                      parameters:
+                        type: object
+      responses:
+        '201':
+          description: Test created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Test'
+  /api/tests/{testId}/executions:
+    post:
+      summary: Start an execution for a test
+      parameters:
+        - in: path
+          name: testId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                runFromStepId:
+                  type: integer
+      responses:
+        '202':
+          description: Execution accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+  /api/executions/{executionId}:
+    get:
+      summary: Get execution status and steps
+      parameters:
+        - in: path
+          name: executionId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Execution status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+components:
+  schemas:
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        schema_name:
+          type: string
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenant_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+    StepDefinition:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        input_schema:
+          type: object
+        output_schema:
+          type: object
+    TestSuite:
+      type: object
+      properties:
+        id:
+          type: integer
+        project_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+    Test:
+      type: object
+      properties:
+        id:
+          type: integer
+        suite_id:
+          type: integer
+        name:
+          type: string
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              stepDefinitionId:
+                type: integer
+              parameters:
+                type: object
+    Execution:
+      type: object
+      properties:
+        id:
+          type: integer
+        test_id:
+          type: integer
+        status:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              step_definition_id:
+                type: integer
+              status:
+                type: string
+              result:
+                type: object

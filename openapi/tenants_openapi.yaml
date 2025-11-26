@@ -1,0 +1,50 @@
+openapi: 3.0.3
+info:
+  title: TestNext Tenant Provisioning API
+  version: 1.0.0
+paths:
+  /api/tenants:
+    post:
+      summary: Create a new tenant (organization)
+      security:
+        - systemAdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, adminEmail]
+              properties:
+                name:
+                  type: string
+                domain:
+                  type: string
+                adminEmail:
+                  type: string
+                  format: email
+                preferredSchemaName:
+                  type: string
+      responses:
+        '201':
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenantId:
+                    type: string
+                    format: uuid
+                  schemaName:
+                    type: string
+                  adminInvitationId:
+                    type: string
+        '400':
+          description: Bad request
+components:
+  securitySchemes:
+    systemAdminAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

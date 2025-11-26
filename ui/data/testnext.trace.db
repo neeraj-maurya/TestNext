@@ -1,0 +1,9 @@
+2025-11-14 11:30:18 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "TENANTS" not found (this database is empty); SQL statement:
+SELECT id, name, schema_name FROM tenants [42104-220]
+2025-11-14 11:31:57 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "TENANTS" not found (this database is empty); SQL statement:
+SELECT id, name, schema_name FROM tenants [42104-220]
+2025-11-14 11:36:12 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "TENANTS" not found (this database is empty); SQL statement:
+SELECT id, name, schema_name FROM tenants [42104-220]

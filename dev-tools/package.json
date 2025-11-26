@@ -1,0 +1,11 @@
+{
+  "name": "testnext-dev-tools",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
+  },
+  "bin": {
+    "generate-jwt": "generate_jwt.js"
+  }
+}

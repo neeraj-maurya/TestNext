@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testnext
+    username: testnext
+    password: password
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: false # we'll run tenant migrations programmatically per schema
+
+# Security and other configs to be added
