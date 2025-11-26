@@ -1,0 +1,39 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '24'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Run Maven verify
+        run: mvn -B -DskipTests verify
+
+      # Run SpotBugs if plugin is available (non-fatal)
+      - name: SpotBugs analysis (optional)
+        run: mvn -B com.github.spotbugs:spotbugs-maven-plugin:4.7.3:check || true
+
+      # Run Checkstyle if configured (non-fatal)
+      - name: Checkstyle analysis (optional)
+        run: mvn -B org.apache.maven.plugins:maven-checkstyle-plugin:3.2.0:check || true
