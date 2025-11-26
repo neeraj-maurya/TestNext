@@ -13,11 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 24
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '24'
+          java-version: '21'
 
       - name: Cache Maven local repository
         uses: actions/cache@v4
@@ -30,7 +30,13 @@ jobs:
       - name: Run Maven verify
         run: mvn -B -DskipTests verify
 
-      # Run SpotBugs if plugin is available (non-fatal)
-      # Run Checkstyle if configured (non-fatal)
-        - name: Run Maven verify (includes SpotBugs/Checkstyle when configured)
-          run: mvn -B -DskipTests verify
+      # Run SpotBugs + Checkstyle in strict mode (activated by -Dquality.strict=true)
+      - name: Run Maven verify (strict quality checks)
+        run: mvn -B -DskipTests -Dquality.strict=true verify
+
+      - name: Upload SpotBugs reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-report
+          path: target/spotbugs/**

@@ -8,7 +8,7 @@
 
   <properties>
     <java.version>24</java.version>
-    <spring.boot.version>3.5.0</spring.boot.version>
+    <spring.boot.version>4.0.0</spring.boot.version>
     <spring-cloud.version>2024.0.0</spring-cloud.version>
     <native.maven.plugin.version>0.10.2</native.maven.plugin.version>
     <!-- quality.strict: set to true in CI to fail builds on SpotBugs/Checkstyle issues -->
@@ -18,7 +18,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.0</version>
+    <version>4.0.0</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -173,6 +173,11 @@
         <version>${native.maven.plugin.version}</version>
         <extensions>true</extensions>
       </plugin>
+      <!-- SpotBugs intentionally configured in a profile so it only runs
+           when `-Dquality.strict=true` (CI). This avoids running SpotBugs
+           under the developer JDK by default where older SpotBugs
+           bytecode analyzers may not support newer class file versions. -->
+
       <!-- Code quality: Checkstyle -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -197,4 +202,41 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>quality</id>
+      <activation>
+        <property>
+          <name>quality.strict</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <!-- Code quality: SpotBugs (only active when -Dquality.strict=true) -->
+          <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>4.4.2</version>
+            <configuration>
+              <failOnError>true</failOnError>
+              <effort>Max</effort>
+              <threshold>Low</threshold>
+              <!-- generate XML/html reports under target/spotbugs for CI artifact upload -->
+              <xmlOutput>true</xmlOutput>
+              <outputDirectory>${project.build.directory}/spotbugs</outputDirectory>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>verify</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
