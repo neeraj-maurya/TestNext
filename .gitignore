@@ -1,0 +1,45 @@
+# Maven / Java
+/target/
+/.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+**/logs/
+**/*.log
+*.class
+*.war
+*.jar
+*.iml
+.idea/
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node / UI
+/ui/node_modules/
+/ui/dist/
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Local dev DB and runtime files
+/data/
+.env
+
+# Test outputs
+/target/surefire-reports/
+/target/test-ids/
+
+# IntelliJ
+out/
+
+# Native-image build artifacts
+/src/main/resources/META-INF/native-image/
+
+# Misc
+coverage/
+coverage-final.json
+
