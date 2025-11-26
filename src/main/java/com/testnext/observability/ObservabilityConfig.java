@@ -3,8 +3,10 @@ package com.testnext.observability;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+// Actuator health types are provided by Spring Boot Actuator. For Spring Boot 4 some
+// health APIs may differ; the simple tenant health indicator was removed to
+// avoid compile-time coupling during the upgrade. Custom health checks can be
+// reintroduced after aligning with the actuator API surface.
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,15 +18,8 @@ import org.springframework.context.annotation.Configuration;
 public class ObservabilityConfig {
 
     /**
-     * Custom health indicator for tenant schema validation.
-     * This ensures the application is healthy only when tenant schemas are accessible.
-     */
-    @Bean
-    public HealthIndicator tenantSchemaHealthIndicator() {
-        return () -> Health.up()
-                .withDetail("tenants", "Tenant schema validation enabled")
-                .build();
-    }
+     * (Note) Tenant schema health indicator intentionally omitted during SB4
+     * upgrade because the actuator health API changed; re-add when ready.
 
     /**
      * Custom metrics for execution tracking.
