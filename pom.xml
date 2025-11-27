@@ -202,41 +202,5 @@
       </plugin>
     </plugins>
   </build>
-  <profiles>
-    <profile>
-      <id>quality</id>
-      <activation>
-        <property>
-          <name>quality.strict</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <!-- Code quality: SpotBugs (only active when -Dquality.strict=true) -->
-          <plugin>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-maven-plugin</artifactId>
-            <version>4.4.2</version>
-            <configuration>
-              <failOnError>true</failOnError>
-              <effort>Max</effort>
-              <threshold>Low</threshold>
-              <!-- generate XML/html reports under target/spotbugs for CI artifact upload -->
-              <xmlOutput>true</xmlOutput>
-              <outputDirectory>${project.build.directory}/spotbugs</outputDirectory>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>verify</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
+  <!-- SpotBugs removed: running static analyzers was deferred to CI/opt-in earlier; plugin removed per user request -->
 </project>

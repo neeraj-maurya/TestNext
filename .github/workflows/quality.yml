@@ -33,10 +33,3 @@ jobs:
       # Run SpotBugs + Checkstyle in strict mode (activated by -Dquality.strict=true)
       - name: Run Maven verify (strict quality checks)
         run: mvn -B -DskipTests -Dquality.strict=true verify
-
-      - name: Upload SpotBugs reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: spotbugs-report
-          path: target/spotbugs/**
