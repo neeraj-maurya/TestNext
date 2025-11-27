@@ -1,8 +1,0 @@
-com\testnext\execution\ExecutionEngineTest$1.class
-com\testnext\execution\ExecutionServiceRerunTest.class
-com\testnext\tenant\SchemaNameValidatorTest.class
-com\testnext\config\TestAppConfig.class
-com\testnext\execution\StepExecutorRegistryTest.class
-com\testnext\execution\ExecutionEngineTest.class
-com\testnext\provisioning\TenantProvisioningServiceTest.class
-com\testnext\provisioning\TenantMigrationRunnerTest.class

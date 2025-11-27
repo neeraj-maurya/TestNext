@@ -46,7 +46,8 @@
     <dependency>
       <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-core</artifactId>
-      <version>6.4.9.Final</version>
+      <!-- Use the version managed by Spring Boot parent to avoid incompatibilities -->
+      <!-- version intentionally omitted -->
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -112,6 +113,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-test-autoconfigure</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
