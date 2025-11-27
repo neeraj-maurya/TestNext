@@ -1,8 +1,0 @@
-[engine:junit-jupiter]/[class:com.testnext.execution.ExecutionEngineTest]/[method:runSimplePlan()]
-[engine:junit-jupiter]/[class:com.testnext.execution.ExecutionServiceRerunTest]/[method:rerunFailedSteps_mergesFailedAndDependentsAndSubmitsPlan()]
-[engine:junit-jupiter]/[class:com.testnext.execution.StepExecutorRegistryTest]/[method:registerAndGet()]
-[engine:junit-jupiter]/[class:com.testnext.integration.DevProfileIntegrationTest]/[method:createTenantAndProject_shouldReturnOk()]
-[engine:junit-jupiter]/[class:com.testnext.provisioning.TenantMigrationRunnerTest]/[method:smoke()]
-[engine:junit-jupiter]/[class:com.testnext.provisioning.TenantProvisioningServiceTest]/[method:testGenerateSchemaName()]
-[engine:junit-jupiter]/[class:com.testnext.tenant.SchemaNameValidatorTest]/[method:testSanitize()]
-[engine:junit-jupiter]/[class:com.testnext.tenant.SchemaNameValidatorTest]/[method:testPatternValid()]

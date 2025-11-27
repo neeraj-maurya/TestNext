@@ -1,14 +1,12 @@
 package com.testnext.service;
 
 import com.testnext.api.dto.ExecutionDto;
-import com.testnext.api.dto.TestDto;
 import com.testnext.model.ExecutionEntity;
 import com.testnext.model.ExecutionStepEntity;
 import com.testnext.model.TestStepEntity;
 import com.testnext.observability.ObservabilityConfig;
 import com.testnext.repository.ExecutionRepository;
 import com.testnext.repository.ExecutionStepRepository;
-import com.testnext.repository.TestRepository;
 import com.testnext.repository.TestStepRepository;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
@@ -23,7 +21,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class ExecutionService {
-    private final TestRepository testRepo;
     private final TestStepRepository testStepRepo;
     private final ExecutionRepository execRepo;
     private final ExecutionStepRepository execStepRepo;
@@ -31,12 +28,10 @@ public class ExecutionService {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public ExecutionService(
-            TestRepository testRepo,
             TestStepRepository testStepRepo,
             ExecutionRepository execRepo,
             ExecutionStepRepository execStepRepo,
             ObservabilityConfig.ExecutionMetrics metrics) {
-        this.testRepo = testRepo;
         this.testStepRepo = testStepRepo;
         this.execRepo = execRepo;
         this.execStepRepo = execStepRepo;

@@ -9,13 +9,11 @@ import javax.sql.DataSource;
 
 @Component
 public class TenantMigrationRunner {
-    private final DataSource dataSource; // central datasource used to execute schema-level commands
     private final JdbcTemplate jdbc;
     private final SchemaNameValidator schemaNameValidator;
     private final FlywayTenantMigrator flywayMigrator;
 
     public TenantMigrationRunner(DataSource dataSource, SchemaNameValidator schemaNameValidator, FlywayTenantMigrator flywayMigrator) {
-        this.dataSource = dataSource;
         this.jdbc = new JdbcTemplate(dataSource);
         this.schemaNameValidator = schemaNameValidator;
         this.flywayMigrator = flywayMigrator;

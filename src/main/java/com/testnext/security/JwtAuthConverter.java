@@ -16,7 +16,7 @@ import java.util.List;
 @Component
 public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
-    private final JwtAuthenticationConverter delegate = new JwtAuthenticationConverter();
+
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {

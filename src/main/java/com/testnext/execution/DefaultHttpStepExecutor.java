@@ -17,7 +17,6 @@ public class DefaultHttpStepExecutor implements StepExecutor {
 
     @Override
     public StepResult execute(String stepDefinitionId, Map<String, Object> parameters) throws Exception {
-        String method = (String) parameters.getOrDefault("method", "GET");
         String url = (String) parameters.get("url");
         if (url == null) return new StepResult(false, null, "url parameter required");
 

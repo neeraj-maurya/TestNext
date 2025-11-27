@@ -7,9 +7,6 @@ import com.testnext.repository.TestRepository;
 import com.testnext.repository.TestStepRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 public class TestService {
     private final TestRepository repo;
@@ -24,12 +21,10 @@ public class TestService {
         e = repo.save(e);
         // persist steps if provided
         if (in.steps != null) {
-            long order = 1;
             for (TestDto.TestStepDto s : in.steps) {
                 TestStepEntity tse = new TestStepEntity();
                 tse.testId = e.id; tse.stepDefinitionId = s.stepDefinitionId; tse.parametersJson = s.parameters == null ? null : s.parameters.toString();
                 stepRepo.save(tse);
-                order++;
             }
         }
         TestDto out = new TestDto(); out.id = e.id; out.suiteId = e.suiteId; out.name = e.name; return out;

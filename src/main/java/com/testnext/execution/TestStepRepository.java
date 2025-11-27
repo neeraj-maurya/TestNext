@@ -47,13 +47,13 @@ public class TestStepRepository {
             String inClause = String.join(",", java.util.Collections.nCopies(batch.size(), "?"));
             String sql = "select id, step_definition_id, parameters_json from test_steps where depends_on_step_id in (" + inClause + ")";
             List<Object> params = new ArrayList<>(batch);
-            List<TestStep> found = jdbc.query(sql, params.toArray(), (rs, rowNum) -> {
+            List<TestStep> found = jdbc.query(sql, (rs, rowNum) -> {
                 TestStep ts = new TestStep();
                 ts.setId(rs.getString("id"));
                 ts.setStepDefinitionId(rs.getString("step_definition_id"));
                 ts.setParameters(rs.getString("parameters_json") == null ? Map.of() : Map.of("params", rs.getString("parameters_json")));
                 return ts;
-            });
+            }, params.toArray());
             for (TestStep t : found) {
                 if (seen.add(t.getId())) {
                     out.add(t);

@@ -2,11 +2,8 @@ package com.testnext.queue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.testnext.execution.ExecutionEngine;
-import com.testnext.execution.ExecutionResult;
 import com.testnext.execution.TestPlan;
 import redis.clients.jedis.Jedis;
-
-import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
