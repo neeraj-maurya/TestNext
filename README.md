@@ -32,6 +32,22 @@ npm run dev
 
 The UI runs at **http://localhost:5173** and forwards `/api` requests to the backend (see `ui/vite.config.js`).
 
+### Login to the Application
+
+The current UI implementation has a **mock login** for quick testing:
+
+1. Open http://localhost:5173 in your browser
+2. You'll see the Login page with a pre-filled username field
+3. **Default username**: `admin` (or use `neera` for the system admin account)
+4. Click **"Sign in"** to proceed
+
+The login currently stores the username in session state (mock implementation). A full OAuth2/JWT integration with the backend is planned for next phase.
+
+**For real authentication**, the backend is configured with OAuth2 resource server support:
+- Configure your OAuth2 provider in `application.yml`
+- System users are stored in the `system_users` table
+- The pre-seeded admin account is: **Username: `neera`** / **Email: `neera@example.com`**
+
 ### Accessing the Application
 
 | Component | URL | Notes |
