@@ -117,6 +117,24 @@ export default function TenantExecution() {
                       <Chip label={`${execution.failCount || 0} ✗`} size="small" color="error" variant="outlined" />
                     </Box>
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={async () => {
+                        if (window.confirm('Delete this execution?')) {
+                          try {
+                            await fetch(`/api/executions/${execution.id}`, { method: 'DELETE' })
+                            fetchExecutions()
+                          } catch (err) {
+                            alert('Failed to delete execution')
+                          }
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
               {executions.length === 0 && (

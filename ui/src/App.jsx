@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Box, CssBaseline } from '@mui/material'
 import Navbar from './components/Navbar'
@@ -7,32 +7,57 @@ import Login from './pages/Login'
 import ProjectsPage from './pages/ProjectsPage'
 import StepDefinitionsPage from './pages/StepDefinitionsPage'
 import SuiteEditor from './pages/SuiteEditor'
+import SuiteDetails from './pages/SuiteDetails'
+import ProjectExecutions from './pages/ProjectExecutions'
+import ProjectTests from './pages/ProjectTests'
 import ExecutionView from './pages/ExecutionView'
 
-// Admin Pages (placeholder)
+// Admin Pages
 import AdminTenantManagement from './pages/admin/AdminTenantManagement'
 import AdminUserManagement from './pages/admin/AdminUserManagement'
 import AdminRoleManagement from './pages/admin/AdminRoleManagement'
 import AdminTestSuites from './pages/admin/AdminTestSuites'
 import AdminStepDefinitions from './pages/admin/AdminStepDefinitions'
 
-// Tenant Pages (placeholder)
+// Tenant Pages
 import TenantTestSuites from './pages/tenant/TenantTestSuites'
 import TenantTestCases from './pages/tenant/TenantTestCases'
 import TenantExecution from './pages/tenant/TenantExecution'
 import TenantReports from './pages/tenant/TenantReports'
 
-export default function App(){
+export default function App() {
   const [user, setUser] = React.useState(null)
-  const isAdmin = user === 'neera'
-  
-  if (!user) return <Login onLogin={u=>setUser(u)} />
-  
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  // Load user from localStorage on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('currentUser')
+    if (savedUser) {
+      setUser(savedUser)
+    }
+    setIsLoading(false)
+  }, [])
+
+  const handleLogin = (username) => {
+    setUser(username)
+    localStorage.setItem('currentUser', username)
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    localStorage.removeItem('currentUser')
+  }
+
+  const isAdmin = user === 'admin'
+
+  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Loading...</Box>
+  if (!user) return <Login onLogin={handleLogin} />
+
   return (
     <>
       <CssBaseline />
       <BrowserRouter>
-        <Navbar user={user} onLogout={()=>setUser(null)} />
+        <Navbar user={user} onLogout={handleLogout} onSwitchUser={handleLogin} />
         <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 64px)' }}>
           <Sidebar isAdmin={isAdmin} />
           <Box component="main" sx={{ flexGrow: 1, p: 3, width: '100%', overflowX: 'auto' }}>
@@ -60,6 +85,9 @@ export default function App(){
 
               {/* Shared Routes */}
               <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/:projectId/executions" element={<ProjectExecutions />} />
+              <Route path="/projects/:projectId/tests" element={<ProjectTests />} />
+              <Route path="/projects/:projectId/suites/:suiteId" element={<SuiteDetails />} />
               <Route path="/steps" element={<StepDefinitionsPage />} />
               <Route path="/suite-editor" element={<SuiteEditor />} />
               <Route path="/execution" element={<ExecutionView />} />

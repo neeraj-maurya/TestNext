@@ -1,0 +1,22 @@
+if : The term 'if' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At C:\Users\neera\VSCodeProjects\TestNext\dev-tools\smoke.ps1:22 char:33
++ record "backend-health" $ready (if ($ready) { "UP" } else { "NOT UP a ...
++                                 ~~
+    + CategoryInfo          : ObjectNotFound: (if:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+record : STEP FAILED: test-suites-get - Unable to connect to the remote server
+At C:\Users\neera\VSCodeProjects\TestNext\dev-tools\smoke.ps1:38 char:3
++   record "test-suites-get" $false $_.Exception.Message
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,record
+ 
+record : STEP FAILED: test-suites-create - create returned null
+At C:\Users\neera\VSCodeProjects\TestNext\dev-tools\smoke.ps1:53 char:3
++   record "test-suites-create" $false "create returned null"
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,record
+ 

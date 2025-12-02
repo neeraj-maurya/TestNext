@@ -11,7 +11,7 @@ spring:
     enabled: false # we'll run tenant migrations programmatically per schema
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:

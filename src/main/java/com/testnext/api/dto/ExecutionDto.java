@@ -8,6 +8,8 @@ import java.util.UUID;
 public class ExecutionDto {
     public UUID id;
     public Long testId;
+    public String testName;
+    public String suiteName;
     public String status;
     public Instant startedAt;
     public Instant finishedAt;

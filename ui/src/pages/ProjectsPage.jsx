@@ -1,7 +1,8 @@
 import React from 'react'
 import axios from 'axios'
-import { 
-  Button, 
+import { Link } from 'react-router-dom'
+import {
+  Button,
   TextField,
   Card,
   CardContent,
@@ -16,37 +17,48 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow
+  TableRow,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  IconButton
 } from '@mui/material'
 
-export default function ProjectsPage(){
+export default function ProjectsPage() {
   const [tenants, setTenants] = React.useState([])
   const [projects, setProjects] = React.useState({})
   const [tenantName, setTenantName] = React.useState('')
   const [projectName, setProjectName] = React.useState('')
   const [selectedTenant, setSelectedTenant] = React.useState(null)
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false)
+
+  // Suites Dialog State
+  const [openSuitesDialog, setOpenSuitesDialog] = React.useState(false)
+  const [selectedProject, setSelectedProject] = React.useState(null)
+  const [suites, setSuites] = React.useState([])
+
   const [error, setError] = React.useState(null)
-  
+
   React.useEffect(() => {
     axios.get('/api/tenants')
       .then(r => {
         console.log('Tenants loaded:', r.data)
         setTenants(r.data || [])
         const newProjects = {}
-        ;(r.data || []).forEach(t => {
-          axios.get(`/api/projects?tenantId=${t.id}`)
-            .then(pr => {
-              console.log('Projects for tenant', t.id, ':', pr.data)
-              newProjects[t.id] = pr.data || []
-              setProjects({...newProjects})
-            })
-            .catch(e => {
-              console.log('Error loading projects for tenant', t.id)
-              newProjects[t.id] = []
-              setProjects({...newProjects})
-            })
-        })
+          ; (r.data || []).forEach(t => {
+            axios.get(`/api/tenants/${t.id}/projects`)
+              .then(pr => {
+                console.log('Projects for tenant', t.id, ':', pr.data)
+                newProjects[t.id] = pr.data || []
+                setProjects({ ...newProjects })
+              })
+              .catch(e => {
+                console.log('Error loading projects for tenant', t.id)
+                newProjects[t.id] = []
+                setProjects({ ...newProjects })
+              })
+          })
       })
       .catch(e => {
         console.error('Error loading tenants:', e)
@@ -59,7 +71,7 @@ export default function ProjectsPage(){
     axios.post('/api/tenants', { name: tenantName })
       .then(r => {
         setTenants(prev => [...prev, r.data])
-        setProjects(prev => ({...prev, [r.data.id]: []}))
+        setProjects(prev => ({ ...prev, [r.data.id]: [] }))
         setTenantName('')
       })
       .catch(e => console.log('Error creating tenant', e))
@@ -67,14 +79,13 @@ export default function ProjectsPage(){
 
   const createProject = () => {
     if (!projectName.trim() || !selectedTenant) return
-    axios.post('/api/projects', { 
+    axios.post(`/api/tenants/${selectedTenant}/projects`, {
       name: projectName,
-      tenantId: selectedTenant,
       description: ''
     })
       .then(r => {
         setProjects(prev => ({
-          ...prev, 
+          ...prev,
           [selectedTenant]: [...(prev[selectedTenant] || []), r.data]
         }))
         setProjectName('')
@@ -97,6 +108,17 @@ export default function ProjectsPage(){
       })
   }
 
+  const handleViewSuites = (project) => {
+    setSelectedProject(project)
+    setOpenSuitesDialog(true)
+    axios.get(`/api/projects/${project.id}/suites`)
+      .then(r => setSuites(r.data))
+      .catch(e => {
+        console.error(e)
+        setSuites([])
+      })
+  }
+
   return (
     <div style={{ padding: 20 }}>
       {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
@@ -112,17 +134,17 @@ export default function ProjectsPage(){
         <CardContent>
           <h3 style={{ marginTop: 0 }}>Add New Tenant</h3>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <TextField 
-              label="Tenant Name" 
-              value={tenantName} 
+            <TextField
+              label="Tenant Name"
+              value={tenantName}
               onChange={e => setTenantName(e.target.value)}
               placeholder="e.g., Acme Corp"
               size="small"
               style={{ flex: 1, maxWidth: 300 }}
             />
-            <Button 
-              onClick={createTenant} 
-              variant="contained" 
+            <Button
+              onClick={createTenant}
+              variant="contained"
               color="primary"
               disabled={!tenantName.trim()}
             >
@@ -148,7 +170,7 @@ export default function ProjectsPage(){
                       <h3 style={{ margin: '0 0 4px 0' }}>{tenant.name}</h3>
                       <p style={{ margin: 0, fontSize: '0.85em', color: '#666' }}>Schema: {tenant.schemaName}</p>
                     </div>
-                    <Chip 
+                    <Chip
                       label={`${(projects[tenant.id] || []).length} projects`}
                       color="primary"
                       variant="outlined"
@@ -162,6 +184,7 @@ export default function ProjectsPage(){
                         <TableRow style={{ backgroundColor: '#f0f0f0' }}>
                           <TableCell><strong>Project Name</strong></TableCell>
                           <TableCell><strong>Description</strong></TableCell>
+                          <TableCell><strong>Actions</strong></TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -169,6 +192,17 @@ export default function ProjectsPage(){
                           <TableRow key={proj.id}>
                             <TableCell>{proj.name}</TableCell>
                             <TableCell>{proj.description || '-'}</TableCell>
+                            <TableCell>
+                              <Button size="small" variant="outlined" onClick={() => handleViewSuites(proj)}>
+                                View Suites
+                              </Button>
+                              <Button size="small" variant="outlined" component={Link} to={`/projects/${proj.id}/executions`} style={{ marginLeft: 8 }}>
+                                View Executions
+                              </Button>
+                              <Button size="small" variant="outlined" component={Link} to={`/projects/${proj.id}/tests`} style={{ marginLeft: 8 }}>
+                                View Tests
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -178,8 +212,8 @@ export default function ProjectsPage(){
                   )}
                 </CardContent>
                 <CardActions>
-                  <Button 
-                    size="small" 
+                  <Button
+                    size="small"
                     color="primary"
                     onClick={() => {
                       setSelectedTenant(tenant.id)
@@ -200,9 +234,9 @@ export default function ProjectsPage(){
         <DialogTitle>Add New Project</DialogTitle>
         <DialogContent>
           <div style={{ paddingTop: 12 }}>
-            <TextField 
-              label="Project Name" 
-              value={projectName} 
+            <TextField
+              label="Project Name"
+              value={projectName}
               onChange={e => setProjectName(e.target.value)}
               fullWidth
               autoFocus
@@ -212,13 +246,40 @@ export default function ProjectsPage(){
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenProjectDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={createProject} 
-            variant="contained" 
+          <Button
+            onClick={createProject}
+            variant="contained"
             color="primary"
             disabled={!projectName.trim()}
           >
             Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* View Suites Dialog */}
+      <Dialog open={openSuitesDialog} onClose={() => setOpenSuitesDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Test Suites: {selectedProject?.name}</DialogTitle>
+        <DialogContent>
+          {suites.length === 0 ? (
+            <p>No test suites found for this project.</p>
+          ) : (
+            <List>
+              {suites.map(suite => (
+                <ListItem key={suite.id} button component={Link} to={`/projects/${selectedProject.id}/suites/${suite.id}`}>
+                  <ListItemText
+                    primary={suite.name}
+                    secondary={suite.description || 'No description'}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenSuitesDialog(false)}>Close</Button>
+          <Button component={Link} to="/suite-editor" color="primary" variant="contained">
+            Create New Suite
           </Button>
         </DialogActions>
       </Dialog>

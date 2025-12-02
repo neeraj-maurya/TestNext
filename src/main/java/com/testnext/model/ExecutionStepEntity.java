@@ -23,6 +23,9 @@ public class ExecutionStepEntity {
     @Lob
     public String resultJson;
 
+    @Lob
+    public String parametersJson;
+
     @Column(name = "started_at")
     public Instant startedAt;
 

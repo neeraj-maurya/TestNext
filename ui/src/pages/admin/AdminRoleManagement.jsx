@@ -1,166 +1,124 @@
 import React, { useState, useEffect } from 'react'
 import {
-  Card, CardContent, CardHeader, TextField, Button, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, Box, Dialog, DialogTitle, DialogContent,
-  DialogActions, IconButton, Chip, MenuItem
+  Card, CardContent, CardHeader, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, Chip, MenuItem, Select,
+  FormControl, InputLabel, Box, Typography
 } from '@mui/material'
-import { DeleteOutlined, EditOutlined } from '@mui/icons-material'
+import { useApi } from '../../hooks/useApi'
 
 export default function AdminRoleManagement() {
-  const [assignments, setAssignments] = useState([])
   const [users, setUsers] = useState([])
   const [tenants, setTenants] = useState([])
-  const [formData, setFormData] = useState({ userId: '', tenantId: '', role: 'viewer' })
-  const [openDialog, setOpenDialog] = useState(false)
-  const [editingId, setEditingId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const api = useApi()
 
   useEffect(() => {
-    fetchAssignments()
-    fetchUsers()
-    fetchTenants()
+    loadData()
   }, [])
 
-  const fetchAssignments = async () => {
+  const loadData = async () => {
+    setLoading(true)
     try {
-      const response = await fetch('/api/role-assignments')
-      const data = await response.json()
-      setAssignments(data || [])
+      const [usersData, tenantsData] = await Promise.all([
+        api.get('/api/system/users'),
+        api.get('/api/tenants')
+      ])
+
+      const userList = Array.isArray(usersData) ? usersData : (usersData?.value || [])
+      const tenantList = Array.isArray(tenantsData) ? tenantsData : (tenantsData?.value || [])
+
+      setUsers(userList)
+      setTenants(tenantList)
     } catch (error) {
-      console.error('Error fetching role assignments:', error)
-      setAssignments([])
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const fetchUsers = async () => {
+  const handleRoleChange = async (userId, newRole) => {
     try {
-      const response = await fetch('/api/system-users')
-      const data = await response.json()
-      setUsers(data || [])
+      // We need to fetch the full user object first or just patch the role if API supported PATCH
+      // Since our API is PUT /api/system/users/{id}, we need to send the full object or at least what's required
+      const user = users.find(u => u.id === userId)
+      if (!user) return
+
+      const updatedUser = { ...user, role: newRole }
+
+      // Optimistic update
+      setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u))
+
+      await api.put(`/api/system/users/${userId}`, updatedUser)
     } catch (error) {
-      console.error('Error fetching users:', error)
+      console.error('Error updating role:', error)
+      alert('Failed to update role')
+      loadData() // Revert on error
     }
   }
 
-  const fetchTenants = async () => {
-    try {
-      const response = await fetch('/api/tenants')
-      const data = await response.json()
-      setTenants(data || [])
-    } catch (error) {
-      console.error('Error fetching tenants:', error)
-    }
+  const getManagedTenant = (userId) => {
+    const tenant = tenants.find(t => t.testManagerId === userId)
+    return tenant ? tenant.name : '-'
   }
 
-  const handleOpenDialog = (assignment = null) => {
-    if (assignment) {
-      setFormData({ userId: assignment.userId, tenantId: assignment.tenantId, role: assignment.role })
-      setEditingId(assignment.id)
-    } else {
-      setFormData({ userId: '', tenantId: '', role: 'viewer' })
-      setEditingId(null)
-    }
-    setOpenDialog(true)
-  }
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
-    setFormData({ userId: '', tenantId: '', role: 'viewer' })
-    setEditingId(null)
-  }
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSave = async () => {
-    try {
-      const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/role-assignments/${editingId}` : '/api/role-assignments'
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      if (response.ok) {
-        handleCloseDialog()
-        fetchAssignments()
-      }
-    } catch (error) {
-      console.error('Error saving role assignment:', error)
-    }
-  }
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this role assignment?')) {
-      try {
-        const response = await fetch(`/api/role-assignments/${id}`, { method: 'DELETE' })
-        if (response.ok) {
-          fetchAssignments()
-        }
-      } catch (error) {
-        console.error('Error deleting role assignment:', error)
-      }
-    }
-  }
-
-  const getUserName = (userId) => {
-    const user = users.find(u => u.id === parseInt(userId))
-    return user ? user.email : `User #${userId}`
-  }
-
-  const getTenantName = (tenantId) => {
-    const tenant = tenants.find(t => t.id === parseInt(tenantId))
-    return tenant ? tenant.name : `Tenant #${tenantId}`
-  }
+  if (loading) return <Box p={3}>Loading...</Box>
 
   return (
     <Card>
-      <CardHeader 
+      <CardHeader
         title="Role Management"
-        subheader="Assign users to tenant roles"
-        action={<Button variant="contained" onClick={() => handleOpenDialog()}>Add Assignment</Button>}
+        subheader="Manage user roles and view tenant assignments"
       />
       <CardContent>
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                <TableCell><strong>ID</strong></TableCell>
                 <TableCell><strong>User</strong></TableCell>
-                <TableCell><strong>Tenant</strong></TableCell>
-                <TableCell><strong>Role</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
+                <TableCell><strong>Current Role</strong></TableCell>
+                <TableCell><strong>Managed Tenant</strong></TableCell>
+                <TableCell><strong>Actions</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {assignments.map(assignment => (
-                <TableRow key={assignment.id}>
-                  <TableCell>{assignment.id}</TableCell>
-                  <TableCell>{getUserName(assignment.userId)}</TableCell>
-                  <TableCell>{getTenantName(assignment.tenantId)}</TableCell>
+              {users.map(user => (
+                <TableRow key={user.id}>
                   <TableCell>
-                    <Chip 
-                      label={assignment.role}
+                    <Box>
+                      <Typography variant="subtitle2">{user.display_name || user.displayName}</Typography>
+                      <Typography variant="caption" color="textSecondary">{user.username}</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.role}
+                      color={
+                        user.role === 'ROLE_SYSTEM_ADMIN' ? 'primary' :
+                          user.role === 'ROLE_TEST_MANAGER' ? 'secondary' : 'default'
+                      }
                       size="small"
-                      color={assignment.role === 'admin' ? 'error' : 'default'}
                     />
                   </TableCell>
-                  <TableCell align="center">
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleOpenDialog(assignment)}
-                      title="Edit"
-                    >
-                      <EditOutlined fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleDelete(assignment.id)}
-                      title="Delete"
-                    >
-                      <DeleteOutlined fontSize="small" />
-                    </IconButton>
+                  <TableCell>
+                    {user.role === 'ROLE_TEST_MANAGER' ? (
+                      <Chip label={getManagedTenant(user.id)} variant="outlined" size="small" />
+                    ) : (
+                      <Typography variant="caption" color="textSecondary">N/A</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                      <Select
+                        value={user.role || 'ROLE_VIEWER'}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        variant="standard"
+                      >
+                        <MenuItem value="ROLE_SYSTEM_ADMIN">System Admin</MenuItem>
+                        <MenuItem value="ROLE_TEST_MANAGER">Test Manager</MenuItem>
+                        <MenuItem value="ROLE_TEST_ENGINEER">Test Engineer</MenuItem>
+                        <MenuItem value="ROLE_VIEWER">Viewer</MenuItem>
+                      </Select>
+                    </FormControl>
                   </TableCell>
                 </TableRow>
               ))}
@@ -168,58 +126,6 @@ export default function AdminRoleManagement() {
           </Table>
         </TableContainer>
       </CardContent>
-
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Role Assignment' : 'Add New Role Assignment'}</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              select
-              label="User"
-              name="userId"
-              value={formData.userId}
-              onChange={handleInputChange}
-            >
-              {users.map(user => (
-                <MenuItem key={user.id} value={user.id}>
-                  {user.email}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              fullWidth
-              select
-              label="Tenant"
-              name="tenantId"
-              value={formData.tenantId}
-              onChange={handleInputChange}
-            >
-              {tenants.map(tenant => (
-                <MenuItem key={tenant.id} value={tenant.id}>
-                  {tenant.name}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              fullWidth
-              select
-              label="Role"
-              name="role"
-              value={formData.role}
-              onChange={handleInputChange}
-            >
-              <MenuItem value="viewer">Viewer</MenuItem>
-              <MenuItem value="editor">Editor</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-            </TextField>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained">Save</Button>
-        </DialogActions>
-      </Dialog>
     </Card>
   )
 }

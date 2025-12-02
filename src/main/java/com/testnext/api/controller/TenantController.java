@@ -16,9 +16,21 @@ public class TenantController {
 
     @PostMapping
     public TenantDto create(@RequestBody TenantDto in) {
-        return svc.create(in.name, in.schemaName);
+        return svc.create(in.name, in.schemaName, in.testManagerId);
     }
 
     @GetMapping
-    public List<TenantDto> list() { return svc.list(); }
+    public List<TenantDto> list() {
+        return svc.list();
+    }
+
+    @PutMapping("/{id}")
+    public TenantDto update(@PathVariable Long id, @RequestBody TenantDto in) {
+        return svc.update(id, in.name, in.schemaName, in.testManagerId);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        svc.delete(id);
+    }
 }

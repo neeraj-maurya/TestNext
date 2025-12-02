@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.springframework.http.MediaType;
 
 @SpringBootTest(classes = com.testnext.config.TestAppConfig.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@ActiveProfiles({"dev", "test"})
+@ActiveProfiles({ "dev", "test" })
 @Sql("/schema.sql")
 public class DevProfileIntegrationTest {
 
@@ -31,24 +31,24 @@ public class DevProfileIntegrationTest {
     @BeforeEach
     public void setup() {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext)
-            .apply(springSecurity())
-            .build();
+                .apply(springSecurity())
+                .build();
     }
 
     @Test
     public void createTenantAndProject_shouldReturnOk() throws Exception {
         // Create tenant as SYSTEM_ADMIN
         mockMvc.perform(post("/api/tenants")
-                .with(jwt().authorities(() -> "SYSTEM_ADMIN"))
+                .with(jwt().authorities(() -> "ROLE_SYSTEM_ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\": \"acme\"}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").exists())
-            .andExpect(jsonPath("$.schemaName").exists());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.schemaName").exists());
 
         // Optionally, list tenants (authorized)
         mockMvc.perform(get("/api/tenants")
-                .with(jwt().authorities(() -> "SYSTEM_ADMIN")))
+                .with(jwt().authorities(() -> "ROLE_SYSTEM_ADMIN")))
                 .andExpect(status().isOk());
     }
 }

@@ -6,4 +6,6 @@ import java.util.Optional;
 
 public interface TenantRepository extends JpaRepository<TenantEntity, Long> {
     Optional<TenantEntity> findBySchemaName(String schemaName);
+
+    Optional<TenantEntity> findByTestManagerId(java.util.UUID testManagerId);
 }

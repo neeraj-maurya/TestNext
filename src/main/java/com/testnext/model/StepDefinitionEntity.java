@@ -16,5 +16,8 @@ public class StepDefinitionEntity {
     @Lob
     public String definition;
 
+    @Lob
+    public String inputsJson;
+
     public Instant createdAt = Instant.now();
 }

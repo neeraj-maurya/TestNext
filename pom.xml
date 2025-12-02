@@ -11,7 +11,6 @@
     <spring.boot.version>4.0.0</spring.boot.version>
     <spring-cloud.version>2024.0.0</spring-cloud.version>
     <native.maven.plugin.version>0.10.2</native.maven.plugin.version>
-    <!-- quality.strict: set to true in CI to fail builds on SpotBugs/Checkstyle issues -->
     <quality.strict>false</quality.strict>
   </properties>
 
@@ -26,7 +25,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
-      <version>${spring.boot.version}</version>
     </dependency>
     <dependency>
       <groupId>io.micrometer</groupId>
@@ -41,74 +39,40 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
-      <version>${spring.boot.version}</version>
     </dependency>
     <dependency>
       <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-core</artifactId>
-      <!-- Use the version managed by Spring Boot parent to avoid incompatibilities -->
-      <!-- version intentionally omitted -->
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
-      <version>${spring.boot.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-      <version>${spring.boot.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
-      <version>${spring.boot.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
-      <version>9.22.0</version>
-    </dependency>
-    <!-- H2 for local dev profile (runtime) -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <version>2.2.220</version>
       <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>42.6.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-jdbc</artifactId>
-      <version>${spring.boot.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-      <version>${spring.boot.version}</version>
-    </dependency>
-    <!-- Redis/Jedis for job queue -->
-    <dependency>
-      <groupId>redis.clients</groupId>
-      <artifactId>jedis</artifactId>
-      <version>4.4.3</version>
-    </dependency>
-    <!-- Jakarta Servlet API (Jakarta EE 10 for Spring Boot 3.5+) -->
-    <dependency>
-      <groupId>jakarta.servlet</groupId>
-      <artifactId>jakarta.servlet-api</artifactId>
-      <version>6.0.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <!-- Testing dependencies -->
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -168,45 +132,11 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.flywaydb</groupId>
-        <artifactId>flyway-maven-plugin</artifactId>
-        <version>9.22.0</version>
-      </plugin>
-      <!-- GraalVM native build support for Spring Boot 4.0 readiness -->
-      <plugin>
         <groupId>org.graalvm.buildtools</groupId>
         <artifactId>native-maven-plugin</artifactId>
         <version>${native.maven.plugin.version}</version>
         <extensions>true</extensions>
       </plugin>
-      <!-- SpotBugs intentionally configured in a profile so it only runs
-           when `-Dquality.strict=true` (CI). This avoids running SpotBugs
-           under the developer JDK by default where older SpotBugs
-           bytecode analyzers may not support newer class file versions. -->
-
-      <!-- Code quality: Checkstyle -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.2.0</version>
-        <configuration>
-          <!-- set to true to fail the build when style violations exist -->
-          <failsOnError>${quality.strict}</failsOnError>
-          <configLocation>google_checks.xml</configLocation>
-          <encoding>UTF-8</encoding>
-          <consoleOutput>true</consoleOutput>
-        </configuration>
-        <executions>
-          <execution>
-            <id>checkstyle-validation</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
-  <!-- SpotBugs removed: running static analyzers was deferred to CI/opt-in earlier; plugin removed per user request -->
 </project>

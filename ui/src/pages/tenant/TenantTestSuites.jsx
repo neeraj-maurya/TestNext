@@ -1,196 +1,165 @@
 import React, { useState, useEffect } from 'react'
 import {
-  Card, CardContent, CardHeader, TextField, Button, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, Box, Dialog, DialogTitle, DialogContent,
-  DialogActions, IconButton, Chip
+  Card, CardContent, CardHeader, Button, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, Chip, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  FormControl, InputLabel, Select, MenuItem, Box, Typography
 } from '@mui/material'
-import { DeleteOutlined, EditOutlined, PlayArrowOutlined, ExpandMoreOutlined } from '@mui/icons-material'
-
-const MOCK_TENANT_SUITES = [
-  { id: 1, name: 'Smoke Tests', description: 'Basic functionality tests', testCount: 10, lastRun: '2025-11-27 14:30' },
-  { id: 2, name: 'E2E Tests', description: 'End-to-end user workflows', testCount: 25, lastRun: '2025-11-26 10:15' },
-]
+import { Add, PlayArrow, Edit, Delete } from '@mui/icons-material'
+import { useApi } from '../../hooks/useApi'
 
 export default function TenantTestSuites() {
-  const [suites, setSuites] = useState(MOCK_TENANT_SUITES)
-  const [formData, setFormData] = useState({ name: '', description: '' })
+  const [suites, setSuites] = useState([])
+  const [projects, setProjects] = useState([])
+  const [selectedProjectId, setSelectedProjectId] = useState('')
+
   const [openDialog, setOpenDialog] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [expandedId, setExpandedId] = useState(null)
+  const [formData, setFormData] = useState({ name: '', description: '' })
+
+  const api = useApi()
 
   useEffect(() => {
-    fetchSuites()
+    fetchProjects()
   }, [])
 
-  const fetchSuites = async () => {
-    try {
-      const response = await fetch('/api/test-suites')
-      const data = await response.json()
-      setSuites(data || [])
-    } catch (error) {
-      console.error('Error fetching test suites, using mock data:', error)
-      setSuites(MOCK_TENANT_SUITES)
-    }
-  }
-
-  const handleOpenDialog = (suite = null) => {
-    if (suite) {
-      setFormData({ name: suite.name, description: suite.description })
-      setEditingId(suite.id)
+  useEffect(() => {
+    if (selectedProjectId) {
+      fetchSuites(selectedProjectId)
     } else {
-      setFormData({ name: '', description: '' })
-      setEditingId(null)
+      setSuites([])
     }
-    setOpenDialog(true)
-  }
+  }, [selectedProjectId])
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
-    setFormData({ name: '', description: '' })
-    setEditingId(null)
-  }
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSave = async () => {
+  const fetchProjects = async () => {
     try {
-      const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/test-suites/${editingId}` : '/api/test-suites'
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      if (response.ok) {
-        handleCloseDialog()
-        fetchSuites()
+      // TEMPORARY: Hardcoding tenantId=1 for dev/demo if not available. 
+      const tenantId = 1;
+      const res = await api.get(`/api/tenants/${tenantId}/projects`)
+      if (res && Array.isArray(res)) {
+        setProjects(res)
+        if (res.length > 0) setSelectedProjectId(res[0].id)
       }
     } catch (error) {
-      console.error('Error saving test suite:', error)
-      if (editingId) {
-        setSuites(suites.map(s => s.id === editingId ? { ...s, ...formData } : s))
-      } else {
-        setSuites([...suites, { ...formData, id: Math.max(...suites.map(s => s.id), 0) + 1, testCount: 0, lastRun: '' }])
-      }
-      handleCloseDialog()
+      console.error('Error fetching projects:', error)
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this test suite?')) {
-      try {
-        const response = await fetch(`/api/test-suites/${id}`, { method: 'DELETE' })
-        if (response.ok) {
-          fetchSuites()
-        }
-      } catch (error) {
-        console.error('Error deleting test suite:', error)
-        setSuites(suites.filter(s => s.id !== id))
-      }
+  const fetchSuites = async (projectId) => {
+    try {
+      const res = await api.get(`/api/projects/${projectId}/suites`)
+      if (res && Array.isArray(res)) setSuites(res)
+      else setSuites([])
+    } catch (error) {
+      console.error('Error fetching suites:', error)
+      setSuites([])
+    }
+  }
+
+  const handleCreate = async () => {
+    if (!selectedProjectId) return
+    try {
+      await api.post(`/api/projects/${selectedProjectId}/suites`, formData)
+      setOpenDialog(false)
+      setFormData({ name: '', description: '' })
+      fetchSuites(selectedProjectId)
+    } catch (error) {
+      console.error('Error creating suite:', error)
     }
   }
 
   return (
-    <Card>
-      <CardHeader 
-        title="My Test Suites"
-        subheader="Create and manage test suites for your tenant"
-        action={<Button variant="contained" onClick={() => handleOpenDialog()}>Create Suite</Button>}
-      />
-      <CardContent>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                <TableCell><strong>Name</strong></TableCell>
-                <TableCell><strong>Description</strong></TableCell>
-                <TableCell><strong>Test Count</strong></TableCell>
-                <TableCell><strong>Last Run</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {suites.map(suite => (
-                <TableRow key={suite.id}>
-                  <TableCell><strong>{suite.name}</strong></TableCell>
-                  <TableCell>{suite.description}</TableCell>
-                  <TableCell>
-                    <Chip label={suite.testCount || 0} size="small" />
-                  </TableCell>
-                  <TableCell>{suite.lastRun || '—'}</TableCell>
-                  <TableCell align="center">
-                    <IconButton 
-                      size="small" 
-                      title="Run Suite"
-                    >
-                      <PlayArrowOutlined fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
-                      title="View Tests"
-                      onClick={() => setExpandedId(expandedId === suite.id ? null : suite.id)}
-                    >
-                      <ExpandMoreOutlined fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleOpenDialog(suite)}
-                      title="Edit"
-                    >
-                      <EditOutlined fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleDelete(suite.id)}
-                      title="Delete"
-                    >
-                      <DeleteOutlined fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Card>
+        <CardContent>
+          <FormControl fullWidth>
+            <InputLabel>Select Project</InputLabel>
+            <Select
+              value={selectedProjectId}
+              label="Select Project"
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              {projects.map(p => (
+                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
               ))}
-              {suites.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 3, color: '#999' }}>
-                    No test suites. Click "Create Suite" to get started.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
+            </Select>
+          </FormControl>
+        </CardContent>
+      </Card>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Test Suite' : 'Create New Test Suite'}</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label="Suite Name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-            />
-            <TextField
-              fullWidth
-              label="Description"
-              name="description"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleInputChange}
-            />
-          </Box>
+      {selectedProjectId && (
+        <Card>
+          <CardHeader
+            title="Test Suites"
+            action={
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setOpenDialog(true)}
+              >
+                New Suite
+              </Button>
+            }
+          />
+          <CardContent>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {suites.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">No suites found</TableCell>
+                    </TableRow>
+                  ) : (
+                    suites.map(suite => (
+                      <TableRow key={suite.id}>
+                        <TableCell>{suite.id}</TableCell>
+                        <TableCell>{suite.name}</TableCell>
+                        <TableCell>{suite.description}</TableCell>
+                        <TableCell align="right">
+                          <IconButton size="small"><PlayArrow /></IconButton>
+                          <IconButton size="small"><Edit /></IconButton>
+                          <IconButton size="small"><Delete /></IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Create Test Suite</DialogTitle>
+        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 400 }}>
+          <TextField
+            label="Name"
+            fullWidth
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
+          <TextField
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained">Save</Button>
+          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleCreate}>Create</Button>
         </DialogActions>
       </Dialog>
-    </Card>
+    </Box>
   )
 }

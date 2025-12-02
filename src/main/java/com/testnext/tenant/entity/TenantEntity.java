@@ -15,14 +15,41 @@ public class TenantEntity {
     @Column(name = "schema_name", nullable = false, unique = true)
     private String schemaName;
 
-    public TenantEntity() {}
+    @Column(name = "test_manager_id")
+    private java.util.UUID testManagerId;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public TenantEntity() {
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getSchemaName() { return schemaName; }
-    public void setSchemaName(String schemaName) { this.schemaName = schemaName; }
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSchemaName() {
+        return schemaName;
+    }
+
+    public void setSchemaName(String schemaName) {
+        this.schemaName = schemaName;
+    }
+
+    public java.util.UUID getTestManagerId() {
+        return testManagerId;
+    }
+
+    public void setTestManagerId(java.util.UUID testManagerId) {
+        this.testManagerId = testManagerId;
+    }
 }

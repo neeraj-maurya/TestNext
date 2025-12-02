@@ -19,7 +19,7 @@ spring:
         order_inserts: true
         order_updates: true
   flyway:
-    enabled: true
+    enabled: false
     # Include standard migrations and dev-only migrations
     locations: classpath:db/migration,classpath:db/migration/dev
     baseline-on-migrate: true

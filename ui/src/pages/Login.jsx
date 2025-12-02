@@ -1,13 +1,29 @@
 import React from 'react'
-import { Button, TextField, Box, Card, CardContent, Typography, Container } from '@mui/material'
+import { Button, TextField, Box, Card, CardContent, Typography, Container, Alert } from '@mui/material'
+
+const VALID_USERS = {
+  'admin': 'admin',
+  'user': 'user'
+}
 
 export default function Login({ onLogin }) {
-  const [user, setUser] = React.useState('neera')
+  const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
+  const [error, setError] = React.useState('')
 
   const handleLogin = () => {
-    if (user.trim()) {
-      onLogin(user)
+    setError('')
+    
+    if (!username.trim() || !password.trim()) {
+      setError('Please enter both username and password')
+      return
+    }
+    
+    if (VALID_USERS[username] === password) {
+      onLogin(username)
+    } else {
+      setError('Invalid credentials. Use admin:admin or user:user')
+      setPassword('')
     }
   }
 
@@ -29,19 +45,24 @@ export default function Login({ onLogin }) {
               Test Automation Platform
             </Typography>
 
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 fullWidth
                 label="Username"
-                placeholder="e.g., neera (admin) or other"
-                value={user}
-                onChange={(e) => setUser(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 onKeyPress={handleKeyPress}
                 autoFocus
               />
               <TextField
                 fullWidth
-                label="Password (Mock)"
+                label="Password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -62,10 +83,10 @@ export default function Login({ onLogin }) {
                 Demo Credentials:
               </Typography>
               <Typography variant="caption" display="block">
-                • <strong>Admin:</strong> neera
+                • <strong>Admin:</strong> admin / admin
               </Typography>
               <Typography variant="caption" display="block">
-                • <strong>Tenant User:</strong> any username
+                • <strong>User:</strong> user / user
               </Typography>
             </Box>
           </CardContent>

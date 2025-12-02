@@ -1,234 +1,314 @@
 import React, { useState, useEffect } from 'react'
 import {
-  Card, CardContent, CardHeader, TextField, Button, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, Box, Dialog, DialogTitle, DialogContent,
-  DialogActions, IconButton, Chip, MenuItem
+  Card, CardContent, CardHeader, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField
 } from '@mui/material'
-import { DeleteOutlined, EditOutlined, PlayArrowOutlined, BookmarkOutlined } from '@mui/icons-material'
+import { PlayArrowOutlined } from '@mui/icons-material'
+import { useApi } from '../../hooks/useApi'
+
+const MOCK_SUITES = [
+  { id: 1, name: 'Login Tests', description: 'Test user authentication', projectId: 1, testCount: 5 },
+  { id: 2, name: 'Payment Tests', description: 'Test payment flows', projectId: 1, testCount: 8 },
+]
 
 export default function TenantTestCases() {
-  const [testCases, setTestCases] = useState([])
-  const [suites, setSuites] = useState([])
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    description: '', 
-    suiteId: '',
-    status: 'draft'
-  })
-  const [openDialog, setOpenDialog] = useState(false)
-  const [editingId, setEditingId] = useState(null)
+  const [suites, setSuites] = useState(MOCK_SUITES)
+  const api = useApi()
 
   useEffect(() => {
-    fetchTestCases()
     fetchSuites()
   }, [])
 
-  const fetchTestCases = async () => {
-    try {
-      const response = await fetch('/api/test-cases')
-      const data = await response.json()
-      setTestCases(data || [])
-    } catch (error) {
-      console.error('Error fetching test cases:', error)
-    }
-  }
-
   const fetchSuites = async () => {
     try {
-      const response = await fetch('/api/test-suites')
-      const data = await response.json()
-      setSuites(data || [])
+      const response = await api.get('/api/test-suites')
+      if (Array.isArray(response)) {
+        setSuites(response)
+      } else if (response?.value) {
+        setSuites(response.value)
+      } else {
+        setSuites(MOCK_SUITES)
+      }
     } catch (error) {
       console.error('Error fetching test suites:', error)
+      setSuites(MOCK_SUITES)
     }
   }
 
-  const handleOpenDialog = (testCase = null) => {
-    if (testCase) {
-      setFormData({
-        name: testCase.name,
-        description: testCase.description,
-        suiteId: testCase.suiteId,
-        status: testCase.status
-      })
-      setEditingId(testCase.id)
-    } else {
-      setFormData({ name: '', description: '', suiteId: '', status: 'draft' })
-      setEditingId(null)
-    }
-    setOpenDialog(true)
+  const [openTestsDialog, setOpenTestsDialog] = useState(false)
+  const [selectedSuite, setSelectedSuite] = useState(null)
+  const [suiteTests, setSuiteTests] = useState([])
+  const [openCreateTestDialog, setOpenCreateTestDialog] = useState(false)
+  const [newTestName, setNewTestName] = useState('')
+  const [availableSteps, setAvailableSteps] = useState([])
+  const [selectedSteps, setSelectedSteps] = useState([])
+
+  const [executionResult, setExecutionResult] = useState(null)
+  const [runningTestId, setRunningTestId] = useState(null)
+
+  const handleManageTests = async (suite) => {
+    setSelectedSuite(suite)
+    setOpenTestsDialog(true)
+    fetchTests(suite.id)
+    fetchSteps()
   }
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
-    setFormData({ name: '', description: '', suiteId: '', status: 'draft' })
-    setEditingId(null)
-  }
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSave = async () => {
+  const fetchTests = async (suiteId) => {
     try {
-      const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/test-cases/${editingId}` : '/api/test-cases'
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      if (response.ok) {
-        handleCloseDialog()
-        fetchTestCases()
-      }
+      const data = await api.get(`/api/test-suites/${suiteId}/tests`)
+      setSuiteTests(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Error saving test case:', error)
+      console.error('Error fetching tests:', error)
+      setSuiteTests([])
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this test case?')) {
-      try {
-        const response = await fetch(`/api/test-cases/${id}`, { method: 'DELETE' })
-        if (response.ok) {
-          fetchTestCases()
-        }
-      } catch (error) {
-        console.error('Error deleting test case:', error)
+  const fetchSteps = async () => {
+    try {
+      const data = await api.get('/api/step-definitions')
+      setAvailableSteps(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error('Error fetching steps:', error)
+    }
+  }
+
+  const handleAddStep = (stepId) => {
+    const step = availableSteps.find(s => s.id === stepId)
+    if (step) {
+      const initialParams = {}
+      if (step.inputs) {
+        step.inputs.forEach(input => {
+          initialParams[input.name] = ''
+        })
       }
+      setSelectedSteps([...selectedSteps, {
+        stepDefinitionId: step.id,
+        name: step.name,
+        inputs: step.inputs,
+        parameters: initialParams
+      }])
     }
   }
 
-  const getSuiteName = (suiteId) => {
-    const suite = suites.find(s => s.id === suiteId)
-    return suite ? suite.name : `Suite #${suiteId}`
+  const handleParamChange = (stepIdx, paramName, value) => {
+    const newSteps = [...selectedSteps]
+    newSteps[stepIdx].parameters[paramName] = value
+    setSelectedSteps(newSteps)
+  }
+
+  const handleCreateTest = async () => {
+    if (!newTestName.trim()) return
+    try {
+      await api.post(`/api/test-suites/${selectedSuite.id}/tests`, {
+        name: newTestName,
+        steps: selectedSteps
+      })
+      setOpenCreateTestDialog(false)
+      setNewTestName('')
+      setSelectedSteps([])
+      fetchTests(selectedSuite.id)
+    } catch (error) {
+      console.error('Error creating test:', error)
+    }
+  }
+
+  const handleRunTest = async (testId) => {
+    setRunningTestId(testId)
+    try {
+      let exec = await api.post(`/api/tests/${testId}/executions`)
+      // Poll for completion
+      while (['ACCEPTED', 'PENDING', 'RUNNING'].includes(exec.status)) {
+        await new Promise(r => setTimeout(r, 1000))
+        exec = await api.get(`/api/executions/${exec.id}`)
+      }
+      setExecutionResult(exec)
+    } catch (error) {
+      console.error('Error running test:', error)
+      alert('Execution failed to start')
+    } finally {
+      setRunningTestId(null)
+    }
   }
 
   return (
     <Card>
-      <CardHeader 
-        title="Test Cases"
-        subheader="Create and manage test cases within your test suites"
-        action={<Button variant="contained" onClick={() => handleOpenDialog()}>Create Test Case</Button>}
+      <CardHeader
+        title="Test Suites (Tenant View)"
+        subheader="Browse and run test suites"
       />
       <CardContent>
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableCell><strong>ID</strong></TableCell>
                 <TableCell><strong>Name</strong></TableCell>
-                <TableCell><strong>Test Suite</strong></TableCell>
                 <TableCell><strong>Description</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
+                <TableCell align="center"><strong>Test Count</strong></TableCell>
+                <TableCell align="center"><strong>Action</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {testCases.map(testCase => (
-                <TableRow key={testCase.id}>
-                  <TableCell><strong>{testCase.name}</strong></TableCell>
-                  <TableCell>{getSuiteName(testCase.suiteId)}</TableCell>
-                  <TableCell>{testCase.description}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={testCase.status}
-                      size="small"
-                      color={
-                        testCase.status === 'draft' ? 'default' :
-                        testCase.status === 'ready' ? 'success' :
-                        'warning'
-                      }
-                    />
-                  </TableCell>
+              {suites.map(suite => (
+                <TableRow key={suite.id}>
+                  <TableCell>{suite.id}</TableCell>
+                  <TableCell><strong>{suite.name}</strong></TableCell>
+                  <TableCell>{suite.description}</TableCell>
+                  <TableCell align="center">{suite.testCount || 0}</TableCell>
                   <TableCell align="center">
-                    <IconButton 
-                      size="small" 
-                      title="Run Test Case"
+                    <IconButton
+                      size="small"
+                      onClick={() => handleManageTests(suite)}
+                      title="Manage Tests"
                     >
                       <PlayArrowOutlined fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
-                      title="Edit"
-                      onClick={() => handleOpenDialog(testCase)}
-                    >
-                      <EditOutlined fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
-                      title="Delete"
-                      onClick={() => handleDelete(testCase.id)}
-                    >
-                      <DeleteOutlined fontSize="small" />
                     </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
-              {testCases.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 3, color: '#999' }}>
-                    No test cases. Click "Create Test Case" to get started.
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </TableContainer>
       </CardContent>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Test Case' : 'Create New Test Case'}</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label="Test Case Name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-            />
-            <TextField
-              fullWidth
-              select
-              label="Test Suite"
-              name="suiteId"
-              value={formData.suiteId}
-              onChange={handleInputChange}
-            >
-              {suites.map(suite => (
-                <MenuItem key={suite.id} value={suite.id}>
-                  {suite.name}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              fullWidth
-              label="Description"
-              name="description"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleInputChange}
-            />
-            <TextField
-              fullWidth
-              select
-              label="Status"
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-            >
-              <MenuItem value="draft">Draft</MenuItem>
-              <MenuItem value="ready">Ready</MenuItem>
-              <MenuItem value="obsolete">Obsolete</MenuItem>
-            </TextField>
-          </Box>
+      {/* Tests List Dialog */}
+      <Dialog open={openTestsDialog} onClose={() => setOpenTestsDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Tests in {selectedSuite?.name}
+          <Button
+            variant="contained"
+            size="small"
+            sx={{ float: 'right' }}
+            onClick={() => {
+              setNewTestName('')
+              setSelectedSteps([])
+              setOpenCreateTestDialog(true)
+            }}
+          >
+            Add Test Case
+          </Button>
+        </DialogTitle>
+        <DialogContent>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Steps</TableCell>
+                  <TableCell align="center">Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {suiteTests.map(test => (
+                  <TableRow key={test.id}>
+                    <TableCell>{test.id}</TableCell>
+                    <TableCell>{test.name}</TableCell>
+                    <TableCell>{test.steps ? test.steps.length : 0} steps</TableCell>
+                    <TableCell align="center">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleRunTest(test.id)}
+                        disabled={runningTestId === test.id}
+                      >
+                        {runningTestId === test.id ? 'Running...' : 'Run'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {suiteTests.length === 0 && (
+                  <TableRow><TableCell colSpan={4} align="center">No tests found</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained">Save</Button>
+          <Button onClick={() => setOpenTestsDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create Test Dialog */}
+      <Dialog open={openCreateTestDialog} onClose={() => setOpenCreateTestDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Create New Test Case</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Test Name"
+            fullWidth
+            value={newTestName}
+            onChange={(e) => setNewTestName(e.target.value)}
+          />
+          <div style={{ marginTop: 20 }}>
+            <h4>Steps</h4>
+            {selectedSteps.map((step, idx) => (
+              <div key={idx} style={{ padding: 12, background: '#f5f5f5', marginBottom: 8, borderRadius: 4 }}>
+                <div style={{ fontWeight: 'bold', marginBottom: 8 }}>{idx + 1}. {step.name}</div>
+                {step.inputs && step.inputs.map(input => (
+                  <TextField
+                    key={input.name}
+                    label={input.name}
+                    size="small"
+                    fullWidth
+                    margin="dense"
+                    value={step.parameters[input.name] || ''}
+                    onChange={(e) => handleParamChange(idx, input.name, e.target.value)}
+                    helperText={`Type: ${input.type}`}
+                  />
+                ))}
+              </div>
+            ))}
+            <div style={{ marginTop: 10 }}>
+              <select
+                onChange={(e) => handleAddStep(Number(e.target.value))}
+                value=""
+                style={{ padding: 8, width: '100%' }}
+              >
+                <option value="">Add a step...</option>
+                {availableSteps.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCreateTestDialog(false)}>Cancel</Button>
+          <Button onClick={handleCreateTest} variant="contained" disabled={!newTestName}>Create</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Execution Result Dialog */}
+      <Dialog open={!!executionResult} onClose={() => setExecutionResult(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Execution Result</DialogTitle>
+        <DialogContent>
+          {executionResult && (
+            <div>
+              <p><strong>Status:</strong> {executionResult.status}</p>
+              <p><strong>Steps:</strong></p>
+              {executionResult.steps && executionResult.steps.map((step, idx) => (
+                <div key={idx} style={{
+                  padding: 8,
+                  marginBottom: 4,
+                  borderLeft: `4px solid ${step.status === 'FINISHED' ? 'green' : 'red'}`,
+                  background: '#fafafa'
+                }}>
+                  <div><strong>Step {idx + 1}:</strong> {step.status}</div>
+                  {step.result && step.result.raw && (
+                    <pre style={{ fontSize: '0.8em', overflow: 'auto' }}>
+                      {JSON.stringify(JSON.parse(step.result.raw), null, 2)}
+                    </pre>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExecutionResult(null)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Card>

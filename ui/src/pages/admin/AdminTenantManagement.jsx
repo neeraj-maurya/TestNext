@@ -1,44 +1,67 @@
 import React, { useState, useEffect } from 'react'
 import {
-  Card, CardContent, CardHeader, TextField, Button, Table, TableBody, TableCell, 
+  Card, CardContent, CardHeader, TextField, Button, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Box, Dialog, DialogTitle, DialogContent,
-  DialogActions, IconButton, Chip
+  DialogActions, IconButton, Chip, MenuItem, FormControl, InputLabel, Select
 } from '@mui/material'
 import { DeleteOutlined, EditOutlined } from '@mui/icons-material'
+import { useApi } from '../../hooks/useApi'
 
 const MOCK_TENANTS = [
-  { id: 1, name: 'TechCorp', schema: 'techcorp_tenant', email: 'admin@techcorp.com' },
-  { id: 2, name: 'FinTrade Inc', schema: 'fintrade_tenant', email: 'admin@fintrade.com' },
+  { id: 1, name: 'TechCorp', schemaName: 'techcorp_tenant' },
+  { id: 2, name: 'FinTrade Inc', schemaName: 'fintrade_tenant' },
 ]
 
 export default function AdminTenantManagement() {
   const [tenants, setTenants] = useState(MOCK_TENANTS)
-  const [formData, setFormData] = useState({ name: '', schema: '', email: '' })
+  const [users, setUsers] = useState([])
+  const [formData, setFormData] = useState({ name: '', schemaName: '', testManagerId: '' })
   const [openDialog, setOpenDialog] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const api = useApi()
 
   useEffect(() => {
-    // Fetch tenants from API or use mock data
     fetchTenants()
+    fetchUsers()
   }, [])
 
   const fetchTenants = async () => {
     try {
-      const response = await fetch('/api/tenants')
-      const data = await response.json()
-      setTenants(data)
+      const response = await api.get('/api/tenants')
+      if (response && Array.isArray(response)) {
+        setTenants(response)
+      } else if (response && response.value) {
+        setTenants(response.value)
+      } else {
+        setTenants(MOCK_TENANTS)
+      }
     } catch (error) {
       console.error('Error fetching tenants, using mock data:', error)
       setTenants(MOCK_TENANTS)
     }
   }
 
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/api/system/users')
+      if (response && Array.isArray(response)) {
+        setUsers(response)
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    }
+  }
+
   const handleOpenDialog = (tenant = null) => {
     if (tenant) {
-      setFormData(tenant)
+      setFormData({
+        name: tenant.name,
+        schemaName: tenant.schemaName,
+        testManagerId: tenant.testManagerId || ''
+      })
       setEditingId(tenant.id)
     } else {
-      setFormData({ name: '', schema: '', email: '' })
+      setFormData({ name: '', schemaName: '', testManagerId: '' })
       setEditingId(null)
     }
     setOpenDialog(true)
@@ -46,7 +69,7 @@ export default function AdminTenantManagement() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false)
-    setFormData({ name: '', schema: '', email: '' })
+    setFormData({ name: '', schemaName: '', testManagerId: '' })
     setEditingId(null)
   }
 
@@ -57,24 +80,24 @@ export default function AdminTenantManagement() {
 
   const handleSave = async () => {
     try {
-      const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/tenants/${editingId}` : '/api/tenants'
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      if (response.ok) {
-        handleCloseDialog()
-        fetchTenants()
+      const payload = { ...formData }
+      if (!payload.testManagerId) delete payload.testManagerId; // Don't send empty string if UUID expected
+
+      if (editingId) {
+        await api.put(`/api/tenants/${editingId}`, payload)
+      } else {
+        await api.post('/api/tenants', payload)
       }
+      handleCloseDialog()
+      fetchTenants()
     } catch (error) {
       console.error('Error saving tenant:', error)
-      // Mock save - add to state
+      // Fallback: add to local state
       if (editingId) {
         setTenants(tenants.map(t => t.id === editingId ? { ...formData, id: editingId } : t))
       } else {
-        setTenants([...tenants, { ...formData, id: Math.max(...tenants.map(t => t.id), 0) + 1 }])
+        const newId = Math.max(...tenants.map(t => t.id || 0), 0) + 1
+        setTenants([...tenants, { ...formData, id: newId }])
       }
       handleCloseDialog()
     }
@@ -83,10 +106,8 @@ export default function AdminTenantManagement() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this tenant?')) {
       try {
-        const response = await fetch(`/api/tenants/${id}`, { method: 'DELETE' })
-        if (response.ok) {
-          fetchTenants()
-        }
+        await api.delete(`/api/tenants/${id}`)
+        fetchTenants()
       } catch (error) {
         console.error('Error deleting tenant:', error)
         setTenants(tenants.filter(t => t.id !== id))
@@ -94,9 +115,14 @@ export default function AdminTenantManagement() {
     }
   }
 
+  const getManagerName = (id) => {
+    const u = users.find(u => u.id === id)
+    return u ? (u.displayName || u.username) : '-'
+  }
+
   return (
     <Card>
-      <CardHeader 
+      <CardHeader
         title="Tenant Management"
         action={<Button variant="contained" onClick={() => handleOpenDialog()}>Add Tenant</Button>}
       />
@@ -108,7 +134,7 @@ export default function AdminTenantManagement() {
                 <TableCell><strong>ID</strong></TableCell>
                 <TableCell><strong>Name</strong></TableCell>
                 <TableCell><strong>Schema</strong></TableCell>
-                <TableCell><strong>Email</strong></TableCell>
+                <TableCell><strong>Test Manager</strong></TableCell>
                 <TableCell><strong>Status</strong></TableCell>
                 <TableCell align="center"><strong>Actions</strong></TableCell>
               </TableRow>
@@ -118,21 +144,21 @@ export default function AdminTenantManagement() {
                 <TableRow key={tenant.id}>
                   <TableCell>{tenant.id}</TableCell>
                   <TableCell>{tenant.name}</TableCell>
-                  <TableCell><code>{tenant.schema}</code></TableCell>
-                  <TableCell>{tenant.email}</TableCell>
+                  <TableCell><code>{tenant.schemaName}</code></TableCell>
+                  <TableCell>{getManagerName(tenant.testManagerId)}</TableCell>
                   <TableCell>
                     <Chip label="Active" color="success" size="small" />
                   </TableCell>
                   <TableCell align="center">
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       onClick={() => handleOpenDialog(tenant)}
                       title="Edit"
                     >
                       <EditOutlined fontSize="small" />
                     </IconButton>
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       onClick={() => handleDelete(tenant.id)}
                       title="Delete"
                     >
@@ -160,18 +186,26 @@ export default function AdminTenantManagement() {
             <TextField
               fullWidth
               label="Database Schema"
-              name="schema"
-              value={formData.schema}
+              name="schemaName"
+              value={formData.schemaName}
               onChange={handleInputChange}
             />
-            <TextField
-              fullWidth
-              label="Admin Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-            />
+            <FormControl fullWidth>
+              <InputLabel>Test Manager</InputLabel>
+              <Select
+                name="testManagerId"
+                value={formData.testManagerId}
+                label="Test Manager"
+                onChange={handleInputChange}
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {users.map(u => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.displayName || u.username} ({u.role})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
