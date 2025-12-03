@@ -5,33 +5,44 @@
 export const useApi = () => {
   const API_BASE = "http://localhost:8080";
 
-  // Get current user from localStorage to determine role
-  const getCurrentUser = () => {
-    return localStorage.getItem('currentUser') || 'admin';
-  };
-
-  // Get API key based on user role
-  const getApiKey = () => {
-    const user = getCurrentUser();
-    return user === 'admin' ? 'admin-key' : 'user-key';
+  // Get auth header from localStorage
+  const getAuthHeader = () => {
+    return localStorage.getItem('authHeader');
   };
 
   const fetchWithAuth = async (endpoint, options = {}) => {
     const url = `${API_BASE}${endpoint}`;
+    const authHeader = getAuthHeader();
+    
     const headers = {
-      "x-api-key": getApiKey(),
-      "X-TestNext-User": getCurrentUser(),
       "Content-Type": "application/json",
       ...options.headers,
     };
+
+    if (authHeader) {
+      headers["Authorization"] = authHeader;
+    }
+
     const response = await fetch(url, {
       ...options,
       headers,
     });
+    
+    if (response.status === 401) {
+      // Handle unauthorized (e.g., redirect to login)
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('authHeader');
+      window.location.href = '/';
+      throw new Error('Unauthorized');
+    }
+
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
-    return response.json().catch(() => response.ok ? { ok: true } : {});
+    
+    // Handle empty responses (like 204 No Content)
+    const text = await response.text();
+    return text ? JSON.parse(text) : {};
   };
 
   return {

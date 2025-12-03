@@ -1,29 +1,41 @@
 import React from 'react'
 import { Button, TextField, Box, Card, CardContent, Typography, Container, Alert } from '@mui/material'
 
-const VALID_USERS = {
-  'admin': 'admin',
-  'user': 'user'
-}
-
 export default function Login({ onLogin }) {
   const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState('')
+  const [loading, setLoading] = React.useState(false)
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError('')
-    
+
     if (!username.trim() || !password.trim()) {
       setError('Please enter both username and password')
       return
     }
-    
-    if (VALID_USERS[username] === password) {
-      onLogin(username)
-    } else {
-      setError('Invalid credentials. Use admin:admin or user:user')
-      setPassword('')
+
+    setLoading(true)
+    try {
+      const authHeader = 'Basic ' + btoa(username + ':' + password)
+
+      const response = await fetch('http://localhost:8080/api/system/users/me', {
+        headers: {
+          'Authorization': authHeader
+        }
+      })
+
+      if (response.ok) {
+        const user = await response.json()
+        onLogin(user.username, authHeader)
+      } else {
+        setError('Invalid credentials')
+      }
+    } catch (err) {
+      setError('Login failed. Please try again.')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -59,6 +71,7 @@ export default function Login({ onLogin }) {
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyPress={handleKeyPress}
                 autoFocus
+                disabled={loading}
               />
               <TextField
                 fullWidth
@@ -67,27 +80,17 @@ export default function Login({ onLogin }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={handleKeyPress}
+                disabled={loading}
               />
-              <Button 
-                fullWidth 
-                variant="contained" 
+              <Button
+                fullWidth
+                variant="contained"
                 size="large"
                 onClick={handleLogin}
+                disabled={loading}
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </Button>
-            </Box>
-
-            <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-              <Typography variant="caption" display="block" sx={{ fontWeight: 'bold', mb: 1 }}>
-                Demo Credentials:
-              </Typography>
-              <Typography variant="caption" display="block">
-                • <strong>Admin:</strong> admin / admin
-              </Typography>
-              <Typography variant="caption" display="block">
-                • <strong>User:</strong> user / user
-              </Typography>
             </Box>
           </CardContent>
         </Card>

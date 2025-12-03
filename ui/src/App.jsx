@@ -10,6 +10,8 @@ import SuiteEditor from './pages/SuiteEditor'
 import SuiteDetails from './pages/SuiteDetails'
 import ProjectExecutions from './pages/ProjectExecutions'
 import ProjectTests from './pages/ProjectTests'
+import UserProfile from './pages/UserProfile'
+
 import ExecutionView from './pages/ExecutionView'
 
 // Admin Pages
@@ -38,17 +40,21 @@ export default function App() {
     setIsLoading(false)
   }, [])
 
-  const handleLogin = (username) => {
+  const handleLogin = (username, authHeader) => {
     setUser(username)
     localStorage.setItem('currentUser', username)
+    if (authHeader) {
+      localStorage.setItem('authHeader', authHeader)
+    }
   }
 
   const handleLogout = () => {
     setUser(null)
     localStorage.removeItem('currentUser')
+    localStorage.removeItem('authHeader')
   }
 
-  const isAdmin = user === 'admin'
+  const isAdmin = user === 'admin' || user === 'system_admin' // simplistic check, ideally check role from token/profile
 
   if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Loading...</Box>
   if (!user) return <Login onLogin={handleLogin} />
@@ -84,6 +90,7 @@ export default function App() {
               )}
 
               {/* Shared Routes */}
+              <Route path="/profile" element={<UserProfile />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:projectId/executions" element={<ProjectExecutions />} />
               <Route path="/projects/:projectId/tests" element={<ProjectTests />} />

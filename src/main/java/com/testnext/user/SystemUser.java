@@ -30,6 +30,9 @@ public class SystemUser {
     @Column(nullable = false)
     private String role; // e.g., SYSTEM_ADMIN
 
+    @Column(name = "api_key", unique = true)
+    private String apiKey;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
@@ -80,6 +83,14 @@ public class SystemUser {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 
     public OffsetDateTime getCreatedAt() {

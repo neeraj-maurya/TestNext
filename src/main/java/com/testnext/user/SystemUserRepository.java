@@ -9,4 +9,6 @@ import java.util.UUID;
 @Repository
 public interface SystemUserRepository extends JpaRepository<SystemUser, UUID> {
     Optional<SystemUser> findByUsername(String username);
+
+    Optional<SystemUser> findByApiKey(String apiKey);
 }

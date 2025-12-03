@@ -20,12 +20,16 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.util.UUID;
 
+import com.testnext.config.TestAppConfig;
+import org.springframework.test.context.TestPropertySource;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(classes = com.testnext.config.TestAppConfig.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(classes = TestAppConfig.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("dev")
+@TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=create-drop")
 @Transactional
 public class TestSuiteIntegrationTest {
 
@@ -64,7 +68,7 @@ public class TestSuiteIntegrationTest {
                 tm.setUsername("tm_suite_test_" + UUID.randomUUID());
                 tm.setEmail("tm_" + UUID.randomUUID() + "@example.com");
                 tm.setHashedPassword("{noop}pass");
-                tm.setRole("TEST_MANAGER");
+                tm.setRole("ROLE_TEST_MANAGER");
 
                 MvcResult uRes = mockMvc.perform(post("/api/system/users")
                                 .contentType(MediaType.APPLICATION_JSON)

@@ -43,7 +43,26 @@ public class SystemUserController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public SystemUser me() {
-        // placeholder - map principal to SystemUser
-        return new SystemUser();
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        return svc.findByUsername(username);
+    }
+
+    @PostMapping("/{id}/api-key")
+    @PreAuthorize("isAuthenticated()")
+    public String generateApiKey(@PathVariable UUID id) {
+        // Allow user to generate their own key, or Admin to generate for anyone
+        String currentUsername = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        SystemUser currentUser = svc.findByUsername(currentUsername);
+
+        if (currentUser == null)
+            throw new RuntimeException("User not found");
+
+        if (!currentUser.getId().equals(id) && !"ROLE_SYSTEM_ADMIN".equals(currentUser.getRole())) {
+            throw new RuntimeException("Access Denied");
+        }
+
+        return svc.generateApiKey(id);
     }
 }

@@ -1,19 +1,11 @@
-import React, { useState } from 'react'
-import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material'
-import { LogoutOutlined, SwitchAccountOutlined } from '@mui/icons-material'
+import React from 'react'
+import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material'
+import { LogoutOutlined, AccountCircleOutlined } from '@mui/icons-material'
+import { useNavigate } from 'react-router-dom'
 
-export default function Navbar({ user, onLogout, onSwitchUser }) {
-  const [openSwitch, setOpenSwitch] = useState(false)
-  const [switchUsername, setSwitchUsername] = useState('')
+export default function Navbar({ user, onLogout }) {
+  const navigate = useNavigate()
   const roleLabel = user === 'admin' ? '👤 (Admin)' : '👤 (User)'
-
-  const handleSwitch = () => {
-    if (switchUsername.trim()) {
-      onSwitchUser(switchUsername.trim())
-      setOpenSwitch(false)
-      setSwitchUsername('')
-    }
-  }
 
   return (
     <>
@@ -28,12 +20,12 @@ export default function Navbar({ user, onLogout, onSwitchUser }) {
             </Typography>
             <Button
               color="inherit"
-              onClick={() => setOpenSwitch(true)}
+              onClick={() => navigate('/profile')}
               size="small"
-              startIcon={<SwitchAccountOutlined />}
+              startIcon={<AccountCircleOutlined />}
               sx={{ mr: 1 }}
             >
-              Switch User
+              Profile
             </Button>
             <Button
               color="inherit"
@@ -46,26 +38,6 @@ export default function Navbar({ user, onLogout, onSwitchUser }) {
           </Box>
         </Toolbar>
       </AppBar>
-
-      <Dialog open={openSwitch} onClose={() => setOpenSwitch(false)}>
-        <DialogTitle>Switch User</DialogTitle>
-        <DialogContent sx={{ pt: 2, minWidth: 300 }}>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Username"
-            fullWidth
-            value={switchUsername}
-            onChange={(e) => setSwitchUsername(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSwitch()}
-            placeholder="Enter username to impersonate"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenSwitch(false)}>Cancel</Button>
-          <Button onClick={handleSwitch} variant="contained">Switch</Button>
-        </DialogActions>
-      </Dialog>
     </>
   )
 }

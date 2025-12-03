@@ -14,6 +14,7 @@ com\testnext\model\TestStepEntity.class
 com\testnext\security\DevAuthFilter.class
 com\testnext\api\dto\TenantDto.class
 com\testnext\execution\dto\RerunRequest.class
+com\testnext\security\TestSecurityService.class
 com\testnext\execution\StartupRegistrar.class
 com\testnext\execution\SystemStepExecutor.class
 com\testnext\tenant\TenantFilter.class
@@ -46,6 +47,7 @@ com\testnext\service\ExecutionService$1.class
 com\testnext\steps\DatabaseSteps.class
 com\testnext\db\TenantRoutingDataSource.class
 com\testnext\repository\TestSuiteRepository.class
+com\testnext\security\ExecutionSecurityService.class
 com\testnext\user\SystemUserService.class
 com\testnext\project\ProjectController.class
 com\testnext\service\TestSuiteService.class
@@ -64,6 +66,8 @@ com\testnext\execution\TestPlan.class
 com\testnext\execution\RerunResult.class
 com\testnext\queue\InMemoryJobQueue.class
 com\testnext\api\controller\TestSuiteController.class
+com\testnext\config\H2Config.class
+com\testnext\security\PasswordEncoderConfig.class
 com\testnext\config\WebConfig.class
 com\testnext\execution\StepResult.class
 com\testnext\execution\StepExecutor.class

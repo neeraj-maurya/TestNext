@@ -27,14 +27,27 @@ import java.util.Optional;
 public class DevAuthFilter extends OncePerRequestFilter {
 
     private final SystemUserRepository userRepo;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public DevAuthFilter(SystemUserRepository userRepo) {
+    public DevAuthFilter(SystemUserRepository userRepo,
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
+        System.out.println("DevAuthFilter: Initialized!");
     }
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DevAuthFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        log.info("DevAuthFilter: Processing {} {}", request.getMethod(), request.getRequestURI());
+        java.util.Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            log.info("Header: {} = {}", headerName, request.getHeader(headerName));
+        }
+
         try {
             // 1. Check for User Switching Header
             String switchUser = request.getHeader("X-TestNext-User");
@@ -73,7 +86,7 @@ public class DevAuthFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // ignore and continue without authentication
+            log.error("DevAuthFilter: Authentication failed unexpectedly", e);
         }
         filterChain.doFilter(request, response);
     }
@@ -98,25 +111,51 @@ public class DevAuthFilter extends OncePerRequestFilter {
     }
 
     private Authentication authFromApiKey(String key) {
-        if ("admin-key".equals(key)) {
-            return new UsernamePasswordAuthenticationToken("admin", null,
-                    List.of(new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN")));
-        }
-        if ("user-key".equals(key)) {
-            return new UsernamePasswordAuthenticationToken("user", null,
-                    List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        Optional<SystemUser> u = userRepo.findByApiKey(key);
+        if (u.isPresent()) {
+            SystemUser user = u.get();
+            String role = user.getRole();
+            if (!role.startsWith("ROLE_"))
+                role = "ROLE_" + role;
+            return new UsernamePasswordAuthenticationToken(user.getUsername(), null,
+                    List.of(new SimpleGrantedAuthority(role)));
         }
         return null;
     }
 
-    private Authentication authFromBasic(String user, String pass) {
-        if ("admin".equals(user) && "admin".equals(pass)) {
-            return new UsernamePasswordAuthenticationToken("admin", null,
-                    List.of(new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN")));
+    private Authentication authFromBasic(String username, String password) {
+        System.out.println("DevAuthFilter: Attempting Basic Auth for user: " + username);
+
+        // Fallback for hardcoded admin/user if not in DB (bootstrapping)
+        if ("admin".equals(username) && "admin".equals(password)) {
+            Optional<SystemUser> u = userRepo.findByUsername("admin");
+            if (u.isEmpty()) {
+                System.out.println("DevAuthFilter: Using bootstrap admin");
+                return new UsernamePasswordAuthenticationToken("admin", null,
+                        List.of(new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN")));
+            }
         }
-        if ("user".equals(user) && "user".equals(pass)) {
-            return new UsernamePasswordAuthenticationToken("user", null,
-                    List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        Optional<SystemUser> u = userRepo.findByUsername(username);
+        if (u.isPresent()) {
+            SystemUser user = u.get();
+            System.out.println("DevAuthFilter: User found in DB. Role: " + user.getRole());
+
+            // Plain text password comparison as requested
+            if (password.equals(user.getHashedPassword())) {
+                System.out.println("DevAuthFilter: Password matches (plain text)");
+                String role = user.getRole();
+                if (!role.startsWith("ROLE_"))
+                    role = "ROLE_" + role;
+                return new UsernamePasswordAuthenticationToken(user.getUsername(), null,
+                        List.of(new SimpleGrantedAuthority(role)));
+            } else {
+                System.out.println("DevAuthFilter: Password mismatch. Stored: " + user.getHashedPassword()
+                        + ", Provided: " + password);
+                return null;
+            }
+        } else {
+            System.out.println("DevAuthFilter: User not found in DB");
         }
         return null;
     }

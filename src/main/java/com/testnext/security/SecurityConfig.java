@@ -24,7 +24,7 @@ public class SecurityConfig {
             TenantExtractionFilter tenantExtractionFilter,
             DevAuthFilter devAuthFilter,
             Environment env) throws Exception {
-        
+
         final boolean isDev;
         if (env != null) {
             isDev = java.util.Arrays.stream(env.getActiveProfiles())
@@ -34,25 +34,41 @@ public class SecurityConfig {
         }
 
         http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> {
-                // Permit API endpoints unconditionally to simplify smoke tests in this environment
-                auth.requestMatchers("/api/**").permitAll();
-                auth.requestMatchers("/api/public/**").permitAll();
-                // Actuator endpoints require ADMIN or ACTUATOR role in production
-                auth.requestMatchers("/actuator/health/liveness").permitAll();
-                auth.requestMatchers("/actuator/health/readiness").permitAll();
-                auth.requestMatchers("/actuator/**").permitAll();
-                auth.anyRequest().permitAll();
-            });
-        
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+                    corsConfiguration.setAllowedOriginPatterns(java.util.List.of("*")); // Allow all origins
+                    corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
+                    corsConfiguration.setAllowCredentials(true); // Important for cookies/auth
+                    return corsConfiguration;
+                }));
+
+        if (isDev) {
+            http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
+        }
+
+        http.authorizeHttpRequests(auth -> {
+            // Permit API endpoints unconditionally to simplify smoke tests in this
+            // environment
+            auth.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll();
+            auth.requestMatchers("/api/**").permitAll();
+            auth.requestMatchers("/api/public/**").permitAll();
+            // Actuator endpoints require ADMIN or ACTUATOR role in production
+            auth.requestMatchers("/actuator/health/liveness").permitAll();
+            auth.requestMatchers("/actuator/health/readiness").permitAll();
+            auth.requestMatchers("/actuator/**").permitAll();
+            auth.anyRequest().permitAll();
+        });
+
         // Disable oauth2ResourceServer in dev to avoid JWT requirement
         // .oauth2ResourceServer(oauth2 -> oauth2
-        //     .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
+        // .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
         // );
 
         // run dev auth filter before token filter so dev credentials can be recognized
-        http.addFilterBefore(devAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(devAuthFilter,
+                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         // run tenant extraction after authentication is established
         http.addFilterAfter(tenantExtractionFilter, BearerTokenAuthenticationFilter.class);
 
@@ -60,10 +76,12 @@ public class SecurityConfig {
     }
 
     /**
-     * Simple JwtDecoder for local smoke runs. This does not perform signature verification
+     * Simple JwtDecoder for local smoke runs. This does not perform signature
+     * verification
      * and should be replaced by a proper JwtDecoder (Nimbus, jwks) in production.
      * 
-     * In Spring Boot 4.0, this pattern will be replaced with more declarative configuration.
+     * In Spring Boot 4.0, this pattern will be replaced with more declarative
+     * configuration.
      */
     @Bean
     public JwtDecoder jwtDecoder() {
@@ -83,17 +101,16 @@ public class SecurityConfig {
                         Instant.now(),
                         Instant.now().plusSeconds(3600),
                         Map.of("alg", "none"),
-                        claims
-                );
+                        claims);
             } catch (Exception e) {
                 return new Jwt(
                         token,
                         Instant.now(),
                         Instant.now().plusSeconds(3600),
                         Map.of("alg", "none"),
-                        Map.of()
-                );
+                        Map.of());
             }
         };
     }
+
 }
