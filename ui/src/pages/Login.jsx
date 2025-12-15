@@ -27,7 +27,7 @@ export default function Login({ onLogin }) {
 
       if (response.ok) {
         const user = await response.json()
-        onLogin(user.username, authHeader)
+        onLogin(user.username, user.role, authHeader)
       } else {
         setError('Invalid credentials')
       }

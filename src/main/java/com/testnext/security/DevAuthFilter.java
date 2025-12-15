@@ -92,11 +92,7 @@ public class DevAuthFilter extends OncePerRequestFilter {
     }
 
     private Authentication authFromUsername(String username) {
-        // Special case for hardcoded admin/user if they don't exist in DB yet
-        if ("admin".equals(username))
-            return authFromBasic("admin", "admin");
-        if ("user".equals(username))
-            return authFromBasic("user", "user");
+        // Hardcoded checks removed. Only DB users allowed.
 
         Optional<SystemUser> u = userRepo.findByUsername(username);
         if (u.isPresent()) {
@@ -126,15 +122,7 @@ public class DevAuthFilter extends OncePerRequestFilter {
     private Authentication authFromBasic(String username, String password) {
         System.out.println("DevAuthFilter: Attempting Basic Auth for user: " + username);
 
-        // Fallback for hardcoded admin/user if not in DB (bootstrapping)
-        if ("admin".equals(username) && "admin".equals(password)) {
-            Optional<SystemUser> u = userRepo.findByUsername("admin");
-            if (u.isEmpty()) {
-                System.out.println("DevAuthFilter: Using bootstrap admin");
-                return new UsernamePasswordAuthenticationToken("admin", null,
-                        List.of(new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN")));
-            }
-        }
+        // Hardcoded bootstrap logic removed.
 
         Optional<SystemUser> u = userRepo.findByUsername(username);
         if (u.isPresent()) {

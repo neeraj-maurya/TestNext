@@ -29,20 +29,25 @@ import TenantReports from './pages/tenant/TenantReports'
 
 export default function App() {
   const [user, setUser] = React.useState(null)
+  const [role, setRole] = React.useState(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
   // Load user from localStorage on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('currentUser')
+    const savedRole = localStorage.getItem('currentRole')
     if (savedUser) {
       setUser(savedUser)
+      setRole(savedRole)
     }
     setIsLoading(false)
   }, [])
 
-  const handleLogin = (username, authHeader) => {
+  const handleLogin = (username, role, authHeader) => {
     setUser(username)
+    setRole(role)
     localStorage.setItem('currentUser', username)
+    localStorage.setItem('currentRole', role)
     if (authHeader) {
       localStorage.setItem('authHeader', authHeader)
     }
@@ -50,11 +55,13 @@ export default function App() {
 
   const handleLogout = () => {
     setUser(null)
+    setRole(null)
     localStorage.removeItem('currentUser')
+    localStorage.removeItem('currentRole')
     localStorage.removeItem('authHeader')
   }
 
-  const isAdmin = user === 'admin' || user === 'system_admin' // simplistic check, ideally check role from token/profile
+  const isAdmin = role === 'ROLE_SYSTEM_ADMIN'
 
   if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Loading...</Box>
   if (!user) return <Login onLogin={handleLogin} />

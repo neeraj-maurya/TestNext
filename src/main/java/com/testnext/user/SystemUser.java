@@ -69,6 +69,11 @@ public class SystemUser {
         this.hashedPassword = hashedPassword;
     }
 
+    // Alias for JSON deserialization
+    public void setPassword(String password) {
+        this.hashedPassword = password;
+    }
+
     public String getDisplayName() {
         return displayName;
     }
