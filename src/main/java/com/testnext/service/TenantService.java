@@ -16,9 +16,13 @@ public class TenantService {
     private final TenantRepository repo;
     private final SchemaInitializer schemaInitializer;
 
-    public TenantService(TenantRepository repo, SchemaInitializer schemaInitializer) {
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    public TenantService(TenantRepository repo, SchemaInitializer schemaInitializer,
+            org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.repo = repo;
         this.schemaInitializer = schemaInitializer;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional
@@ -65,6 +69,23 @@ public class TenantService {
     @Transactional
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public void delete(Long id) {
-        repo.deleteById(id);
+        repo.findById(id).ifPresent(tenant -> {
+            String schema = tenant.getSchemaName();
+            repo.deleteById(id);
+            dropSchema(schema);
+        });
+    }
+
+    private void dropSchema(String schemaName) {
+        if (schemaName != null && !schemaName.isBlank()) {
+            // Validate schema name to prevent SQL injection (simple check)
+            if (!schemaName.matches("^[a-z0-9_]+$")) {
+                throw new IllegalArgumentException("Invalid schema name");
+            }
+            // Use String.format for logging/debugging, but strictly validated
+            String sql = "DROP SCHEMA IF EXISTS \"" + schemaName + "\" CASCADE";
+            System.out.println("TenantService: Dropping schema: " + schemaName);
+            jdbcTemplate.execute(sql);
+        }
     }
 }

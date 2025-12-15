@@ -103,16 +103,26 @@ export default function AdminTenantManagement() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this tenant?')) {
-      try {
-        await api.delete(`/api/tenants/${id}`)
-        fetchTenants()
-      } catch (error) {
-        console.error('Error deleting tenant:', error)
-        setTenants(tenants.filter(t => t.id !== id))
-      }
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [tenantToDelete, setTenantToDelete] = useState(null)
+
+  const confirmDelete = (tenant) => {
+    setTenantToDelete(tenant)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDelete = async () => {
+    if (!tenantToDelete) return
+
+    try {
+      await api.delete(`/api/tenants/${tenantToDelete.id}`)
+      fetchTenants()
+    } catch (error) {
+      console.error('Error deleting tenant:', error)
+      setTenants(tenants.filter(t => t.id !== tenantToDelete.id))
     }
+    setDeleteDialogOpen(false)
+    setTenantToDelete(null)
   }
 
   const getManagerName = (id) => {
@@ -159,8 +169,9 @@ export default function AdminTenantManagement() {
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={() => handleDelete(tenant.id)}
+                      onClick={() => confirmDelete(tenant)}
                       title="Delete"
+                      color="error" // Highlight danger
                     >
                       <DeleteOutlined fontSize="small" />
                     </IconButton>
@@ -213,6 +224,20 @@ export default function AdminTenantManagement() {
           <Button onClick={handleSave} variant="contained">Save</Button>
         </DialogActions>
       </Dialog>
-    </Card>
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle sx={{ color: 'error.main' }}>⚠️ Irreversible Action</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete the tenant <strong>{tenantToDelete?.name}</strong>?
+          <br /><br />
+          This will <strong>permanently delete</strong> the associated database schema <code>{tenantToDelete?.schemaName}</code> and <strong>ALL</strong> data within it.
+          <br /><br />
+          This action cannot be undone.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">Yes, Delete</Button>
+        </DialogActions>
+      </Dialog>
+    </Card >
   )
 }
