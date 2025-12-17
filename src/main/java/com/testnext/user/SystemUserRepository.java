@@ -11,4 +11,8 @@ public interface SystemUserRepository extends JpaRepository<SystemUser, UUID> {
     Optional<SystemUser> findByUsername(String username);
 
     Optional<SystemUser> findByApiKey(String apiKey);
+
+    java.util.List<SystemUser> findByTenantId(Long tenantId);
+
+    java.util.List<SystemUser> findByTenantIdAndRole(Long tenantId, String role);
 }

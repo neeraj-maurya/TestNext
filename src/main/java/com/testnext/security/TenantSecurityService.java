@@ -21,6 +21,31 @@ public class TenantSecurityService {
         this.userRepo = userRepo;
     }
 
+    public boolean isMember(Authentication auth, Long tenantId) {
+        if (auth == null || !auth.isAuthenticated())
+            return false;
+
+        // Assuming getUser and isAdmin methods exist or will be added elsewhere for
+        // compilation
+        // For the purpose of this edit, we'll assume their existence or provide minimal
+        // placeholders if necessary
+        // Based on the original code, we can infer how to get the user and check admin
+        // role.
+        Optional<SystemUser> userOpt = userRepo.findByUsername(auth.getName());
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+        SystemUser user = userOpt.get();
+
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_SYSTEM_ADMIN"));
+        if (isAdmin) {
+            return true;
+        }
+
+        return tenantId != null && tenantId.equals(user.getTenantId());
+    }
+
     public boolean hasAccess(Authentication auth, Long tenantId) {
         if (auth == null || !auth.isAuthenticated())
             return false;

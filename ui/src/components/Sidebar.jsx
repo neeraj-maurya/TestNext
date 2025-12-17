@@ -67,6 +67,12 @@ export default function Sidebar({ isAdmin }) {
                   >
                     <ListItemText primary="User Management" />
                   </ListItemButton>
+                  <ListItemButton
+                    sx={{ pl: 4 }}
+                    onClick={() => handleNavigate('/admin/projects')}
+                  >
+                    <ListItemText primary="Global Projects" />
+                  </ListItemButton>
 
                   <ListItemButton
                     sx={{ pl: 4 }}
@@ -96,6 +102,12 @@ export default function Sidebar({ isAdmin }) {
               </ListItemButton>
               <Collapse in={expandedMenu === 'tenant'} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
+                  <ListItemButton
+                    sx={{ pl: 4 }}
+                    onClick={() => handleNavigate('/tenant/projects')}
+                  >
+                    <ListItemText primary="My Projects" />
+                  </ListItemButton>
                   <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/tenant/test-suites')}

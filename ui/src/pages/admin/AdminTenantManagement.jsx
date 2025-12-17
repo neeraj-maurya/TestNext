@@ -7,13 +7,8 @@ import {
 import { DeleteOutlined, EditOutlined } from '@mui/icons-material'
 import { useApi } from '../../hooks/useApi'
 
-const MOCK_TENANTS = [
-  { id: 1, name: 'TechCorp', schemaName: 'techcorp_tenant' },
-  { id: 2, name: 'FinTrade Inc', schemaName: 'fintrade_tenant' },
-]
-
 export default function AdminTenantManagement() {
-  const [tenants, setTenants] = useState(MOCK_TENANTS)
+  const [tenants, setTenants] = useState([])
   const [users, setUsers] = useState([])
   const [formData, setFormData] = useState({ name: '', schemaName: '', testManagerId: '', active: true })
   const [openDialog, setOpenDialog] = useState(false)
@@ -33,11 +28,11 @@ export default function AdminTenantManagement() {
       } else if (response && response.value) {
         setTenants(response.value)
       } else {
-        setTenants(MOCK_TENANTS)
+        setTenants([])
       }
     } catch (error) {
-      console.error('Error fetching tenants, using mock data:', error)
-      setTenants(MOCK_TENANTS)
+      console.error('Error fetching tenants:', error)
+      setTenants([])
     }
   }
 

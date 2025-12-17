@@ -16,11 +16,13 @@ import ExecutionView from './pages/ExecutionView'
 
 // Admin Pages
 import AdminTenantManagement from './pages/admin/AdminTenantManagement'
+import AdminProjectsPage from './pages/admin/AdminProjectsPage'
 import AdminUserManagement from './pages/admin/AdminUserManagement'
 import AdminTestSuites from './pages/admin/AdminTestSuites'
 import AdminStepDefinitions from './pages/admin/AdminStepDefinitions'
 
 // Tenant Pages
+import TenantProjectsPage from './pages/tenant/TenantProjectsPage'
 import TenantTestSuites from './pages/tenant/TenantTestSuites'
 import TenantTestCases from './pages/tenant/TenantTestCases'
 import TenantExecution from './pages/tenant/TenantExecution'
@@ -80,7 +82,7 @@ export default function App() {
               {isAdmin && (
                 <>
                   <Route path="/admin/tenants" element={<AdminTenantManagement />} />
-                  <Route path="/admin/users" element={<AdminUserManagement />} />
+                  <Route path="/admin/projects" element={<AdminProjectsPage />} />
                   <Route path="/admin/users" element={<AdminUserManagement />} />
                   <Route path="/admin/test-suites" element={<AdminTestSuites />} />
                   <Route path="/admin/test-steps-library" element={<AdminStepDefinitions />} />
@@ -90,6 +92,7 @@ export default function App() {
               {/* Tenant User Routes */}
               {!isAdmin && (
                 <>
+                  <Route path="/tenant/projects" element={<TenantProjectsPage />} />
                   <Route path="/tenant/test-suites" element={<TenantTestSuites />} />
                   <Route path="/tenant/test-cases" element={<TenantTestCases />} />
                   <Route path="/tenant/execution" element={<TenantExecution />} />

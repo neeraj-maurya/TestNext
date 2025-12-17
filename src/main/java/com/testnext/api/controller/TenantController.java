@@ -9,9 +9,11 @@ import java.util.List;
 @RequestMapping("/api/tenants")
 public class TenantController {
     private final TenantService svc;
+    private final com.testnext.user.SystemUserRepository userRepo;
 
-    public TenantController(TenantService svc) {
+    public TenantController(TenantService svc, com.testnext.user.SystemUserRepository userRepo) {
         this.svc = svc;
+        this.userRepo = userRepo;
     }
 
     @PostMapping
@@ -32,5 +34,11 @@ public class TenantController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         svc.delete(id);
+    }
+
+    @GetMapping("/{id}/users")
+    @org.springframework.security.access.prepost.PreAuthorize("@tenantSecurity.hasAccess(authentication, #id) or hasRole('SYSTEM_ADMIN')")
+    public java.util.List<com.testnext.user.SystemUser> listUsers(@PathVariable Long id) {
+        return userRepo.findByTenantId(id);
     }
 }

@@ -9,11 +9,14 @@ import java.util.UUID;
 @Service
 public class SystemUserService {
     private final SystemUserRepository repo;
+    private final com.testnext.repository.TenantRepository tenantRepo;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public SystemUserService(SystemUserRepository repo,
+            com.testnext.repository.TenantRepository tenantRepo,
             org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.repo = repo;
+        this.tenantRepo = tenantRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -50,23 +53,25 @@ public class SystemUserService {
         }
 
         if (in.getHashedPassword() != null && !in.getHashedPassword().isEmpty()) {
-            // Store plain text password as requested
             in.setHashedPassword(in.getHashedPassword());
         } else {
-            // default password for dev/testing if none provided
             in.setHashedPassword(in.getUsername() + "123");
         }
 
-        // Ensure active is set (default is true in entity but good to be explicit if
-        // passed in JSON)
-        // in.isActive() is relied upon
+        SystemUser saved = repo.save(in);
 
-        return repo.save(in);
+        // Sync Tenant Manager Logic (Create)
+        syncTenantManagerOnCreate(saved);
+
+        return saved;
     }
 
     @Transactional
     public SystemUser update(UUID id, SystemUser in) {
         return repo.findById(id).map(u -> {
+            boolean wasManager = "ROLE_TEST_MANAGER".equals(u.getRole());
+            Long oldTenantId = u.getTenantId();
+
             // Handle Username Update
             if (in.getUsername() != null && !in.getUsername().isBlank() && !in.getUsername().equals(u.getUsername())) {
                 if (repo.findByUsername(in.getUsername()).isPresent()) {
@@ -99,13 +104,11 @@ public class SystemUserService {
 
                 // Tenant Validation for Role Change
                 if (!"ROLE_SYSTEM_ADMIN".equals(in.getRole())) {
-                    // New role requires tenant. Check if we have one.
                     if (u.getTenantId() == null && in.getTenantId() == null) {
                         throw new IllegalArgumentException("Tenant is required when changing to role: " + in.getRole());
                     }
                 }
 
-                // Hierarchy Rule: Cannot demote the last System Admin
                 if ("ROLE_SYSTEM_ADMIN".equals(u.getRole())) {
                     long adminCount = repo.findAll().stream()
                             .filter(user -> "ROLE_SYSTEM_ADMIN".equals(user.getRole()) && user.isActive())
@@ -121,20 +124,27 @@ public class SystemUserService {
             if (in.getHashedPassword() != null && !in.getHashedPassword().isEmpty()) {
                 u.setHashedPassword(passwordEncoder.encode(in.getHashedPassword()));
             }
-            return repo.save(u);
+
+            SystemUser updated = repo.save(u);
+            syncTenantManagerOnUpdate(updated, wasManager, oldTenantId);
+            return updated;
         }).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     @Transactional
     public void delete(UUID id) {
         SystemUser u = repo.findById(id).orElse(null);
-        if (u != null && "ROLE_SYSTEM_ADMIN".equals(u.getRole())) {
-            long adminCount = repo.findAll().stream()
-                    .filter(user -> "ROLE_SYSTEM_ADMIN".equals(user.getRole()))
-                    .count();
-            if (adminCount <= 1) {
-                throw new IllegalStateException("Cannot delete the last System Admin");
+        if (u != null) {
+            if ("ROLE_SYSTEM_ADMIN".equals(u.getRole())) {
+                long adminCount = repo.findAll().stream()
+                        .filter(user -> "ROLE_SYSTEM_ADMIN".equals(user.getRole()))
+                        .count();
+                if (adminCount <= 1) {
+                    throw new IllegalStateException("Cannot delete the last System Admin");
+                }
             }
+            // Sync Tenant Manager Logic (Delete)
+            syncTenantManagerOnDelete(u);
         }
         repo.deleteById(id);
     }
@@ -158,5 +168,69 @@ public class SystemUserService {
         user.setApiKey(newKey);
         repo.save(user);
         return newKey;
+    }
+
+    // --- Tenant Manager Sync Logic ---
+
+    private void syncTenantManagerOnCreate(SystemUser user) {
+        if ("ROLE_TEST_MANAGER".equals(user.getRole()) && user.getTenantId() != null) {
+            tenantRepo.findById(user.getTenantId()).ifPresent(t -> {
+                if (t.getTestManagerId() == null) {
+                    t.setTestManagerId(user.getId());
+                    tenantRepo.save(t);
+                }
+            });
+        }
+    }
+
+    private void syncTenantManagerOnUpdate(SystemUser user, boolean wasManager, Long oldTenantId) {
+        boolean isManager = "ROLE_TEST_MANAGER".equals(user.getRole());
+
+        // Case 1: Tenant Change
+        if (oldTenantId != null && !oldTenantId.equals(user.getTenantId())) {
+            handleManagerRemoval(oldTenantId, user.getId());
+            if (isManager)
+                syncTenantManagerOnCreate(user); // Treat as new in new tenant
+            return;
+        }
+
+        // Case 2: Demotion (Manager -> Impl/Viewer)
+        if (wasManager && !isManager) {
+            handleManagerRemoval(user.getTenantId(), user.getId());
+        }
+
+        // Case 3: Promotion (Other -> Manager)
+        if (!wasManager && isManager) {
+            syncTenantManagerOnCreate(user);
+        }
+    }
+
+    private void syncTenantManagerOnDelete(SystemUser user) {
+        if ("ROLE_TEST_MANAGER".equals(user.getRole())) {
+            handleManagerRemoval(user.getTenantId(), user.getId());
+        }
+    }
+
+    private void handleManagerRemoval(Long tenantId, UUID userId) {
+        if (tenantId == null)
+            return;
+
+        tenantRepo.findById(tenantId).ifPresent(t -> {
+            if (userId.equals(t.getTestManagerId())) {
+                // Determine new manager
+                UUID newManagerId = findReplacementManager(tenantId, userId);
+                t.setTestManagerId(newManagerId);
+                tenantRepo.save(t);
+            }
+        });
+    }
+
+    private UUID findReplacementManager(Long tenantId, UUID excludedUserId) {
+        List<SystemUser> managers = repo.findByTenantIdAndRole(tenantId, "ROLE_TEST_MANAGER");
+        return managers.stream()
+                .filter(u -> !u.getId().equals(excludedUserId) && u.isActive())
+                .findFirst()
+                .map(SystemUser::getId)
+                .orElse(null);
     }
 }
