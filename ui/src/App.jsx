@@ -83,7 +83,7 @@ export default function App() {
                   <Route path="/admin/users" element={<AdminUserManagement />} />
                   <Route path="/admin/users" element={<AdminUserManagement />} />
                   <Route path="/admin/test-suites" element={<AdminTestSuites />} />
-                  <Route path="/admin/step-definitions" element={<AdminStepDefinitions />} />
+                  <Route path="/admin/test-steps-library" element={<AdminStepDefinitions />} />
                 </>
               )}
 

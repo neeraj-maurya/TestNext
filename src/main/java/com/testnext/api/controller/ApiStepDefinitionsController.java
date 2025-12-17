@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/step-definitions")
+@RequestMapping("/api/test-steps-library")
 public class ApiStepDefinitionsController {
     private final StepDefinitionService svc;
     private final StepDefinitionRepository repo;

@@ -76,9 +76,9 @@ export default function Sidebar({ isAdmin }) {
                   </ListItemButton>
                   <ListItemButton
                     sx={{ pl: 4 }}
-                    onClick={() => handleNavigate('/admin/step-definitions')}
+                    onClick={() => handleNavigate('/admin/test-steps-library')}
                   >
-                    <ListItemText primary="Step Definitions" />
+                    <ListItemText primary="Test Steps Library" />
                   </ListItemButton>
                 </List>
               </Collapse>

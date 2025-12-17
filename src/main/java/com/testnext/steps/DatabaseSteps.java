@@ -7,9 +7,12 @@ import java.util.Map;
 @Component
 public class DatabaseSteps {
 
-    @TestStep(name = "Validate DB Fields", description = "Validate that a record in the database matches expected values", inputs = {
-            "table_name:string:true", "id:string:true", "expected_values:object:true"
-    })
+    @TestStep(id = "db.runSql", name = "Run SQL Query", description = "Executes a SQL query against the connected database")
+    public void runSql(String query) {
+        System.out.println("Executing SQL: " + query);
+    }
+
+    @TestStep(id = "db.validateFields", name = "Validate DB Fields", description = "Validate that a record in the database matches expected values")
     @SuppressWarnings("unchecked")
     public Map<String, Object> validateFields(Map<String, Object> params) {
         String tableName = (String) params.get("table_name");

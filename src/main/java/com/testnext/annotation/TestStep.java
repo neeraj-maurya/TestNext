@@ -8,9 +8,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface TestStep {
+    String id(); // Unique ID for the step
+
     String name();
 
     String description() default "";
-
-    String[] inputs() default {};
 }

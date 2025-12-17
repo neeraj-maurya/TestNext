@@ -20,7 +20,9 @@ public class StepDefinitionService {
     public StepDefinitionDto create(StepDefinitionDto in) {
         StepDefinitionEntity e = new StepDefinitionEntity();
         e.name = in.name;
-        e.definition = in.description;
+        e.description = in.description;
+        // Generate a random refId if manual creation (legacy support)
+        e.refId = in.refId != null ? in.refId : java.util.UUID.randomUUID().toString();
         try {
             e.inputsJson = in.inputs != null ? mapper.writeValueAsString(in.inputs) : null;
         } catch (Exception ex) {
@@ -30,6 +32,23 @@ public class StepDefinitionService {
         return toDto(e);
     }
 
+    @org.springframework.transaction.annotation.Transactional
+    public void sync(StepDefinitionDto in) {
+        StepDefinitionEntity e = repo.findByRefId(in.refId).orElse(new StepDefinitionEntity());
+        e.refId = in.refId;
+        e.name = in.name;
+        e.description = in.description;
+        e.returnType = in.returnType;
+        e.parameterTypes = in.parameterTypes;
+
+        try {
+            e.inputsJson = in.inputs != null ? mapper.writeValueAsString(in.inputs) : null;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+        repo.save(e);
+    }
+
     public List<StepDefinitionDto> list() {
         return repo.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
@@ -37,8 +56,11 @@ public class StepDefinitionService {
     private StepDefinitionDto toDto(StepDefinitionEntity e) {
         StepDefinitionDto d = new StepDefinitionDto();
         d.id = e.id;
+        d.refId = e.refId;
         d.name = e.name;
-        d.description = e.definition;
+        d.description = e.description;
+        d.returnType = e.returnType;
+        d.parameterTypes = e.parameterTypes;
         try {
             if (e.inputsJson != null) {
                 d.inputs = mapper.readValue(e.inputsJson,

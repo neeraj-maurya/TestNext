@@ -6,11 +6,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tenants/{tenantId}/step-definitions")
+@RequestMapping("/api/tenants/{tenantId}/test-steps-library")
 public class StepDefinitionController {
     private final StepDefinitionService svc;
 
-    public StepDefinitionController(StepDefinitionService svc) { this.svc = svc; }
+    public StepDefinitionController(StepDefinitionService svc) {
+        this.svc = svc;
+    }
 
     @PostMapping
     public StepDefinitionDto create(@PathVariable Long tenantId, @RequestBody StepDefinitionDto in) {
@@ -19,5 +21,7 @@ public class StepDefinitionController {
     }
 
     @GetMapping
-    public List<StepDefinitionDto> list(@PathVariable Long tenantId) { return svc.list(); }
+    public List<StepDefinitionDto> list(@PathVariable Long tenantId) {
+        return svc.list();
+    }
 }
