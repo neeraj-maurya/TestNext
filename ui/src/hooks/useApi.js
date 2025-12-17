@@ -37,7 +37,23 @@ export const useApi = () => {
     }
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      let errorInfo = `API error: ${response.status} ${response.statusText}`;
+      try {
+        const errorJson = await response.json();
+        // If backend sends { "error": "Message" }, use that.
+        if (errorJson && errorJson.error) {
+          errorInfo = errorJson.error;
+        } else {
+          errorInfo = JSON.stringify(errorJson);
+        }
+        // Attach full response data to error for callers to inspect if needed
+        const err = new Error(errorInfo);
+        err.response = { data: errorJson, status: response.status };
+        throw err;
+      } catch (e) {
+        // Fallback if not JSON
+        throw new Error(errorInfo);
+      }
     }
 
     // Handle empty responses (like 204 No Content)

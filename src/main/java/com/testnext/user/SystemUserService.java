@@ -80,11 +80,15 @@ public class SystemUserService {
             if (in.getDisplayName() != null)
                 u.setDisplayName(in.getDisplayName());
 
-            // Allow updating tenantId
-            if (in.getTenantId() != null) {
+            // Determine effective role to check for Admin status
+            String roleToCheck = in.getRole() != null ? in.getRole() : u.getRole();
+
+            // Tenant Logic: Strictly enforce NULL tenant for System Admins
+            if ("ROLE_SYSTEM_ADMIN".equals(roleToCheck)) {
+                u.setTenantId(null);
+            } else if (in.getTenantId() != null) {
+                // Only allow setting tenant if NOT an admin
                 u.setTenantId(in.getTenantId());
-            } else if ("ROLE_SYSTEM_ADMIN".equals(in.getRole())) {
-                // Admins can clear tenant? Maybe. For now allow explicit set.
             }
 
             // Update Active Status
@@ -107,7 +111,8 @@ public class SystemUserService {
                             .filter(user -> "ROLE_SYSTEM_ADMIN".equals(user.getRole()) && user.isActive())
                             .count();
                     if (adminCount <= 1) {
-                        throw new IllegalStateException("Cannot demote the last Active System Admin");
+                        throw new IllegalStateException(
+                                "Cannot change role: logic requires at least one active System Admin. Please create another Admin first.");
                     }
                 }
                 u.setRole(in.getRole());

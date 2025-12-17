@@ -1,16 +1,16 @@
 import React from 'react'
-import { 
-  Drawer, 
-  List, 
-  ListItemButton, 
-  ListItemIcon, 
+import {
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
   ListItemText,
   Collapse,
   Divider,
   Box
 } from '@mui/material'
-import { 
-  ExpandLess, 
+import {
+  ExpandLess,
   ExpandMore,
   Dashboard,
   Layers
@@ -30,10 +30,10 @@ export default function Sidebar({ isAdmin }) {
   }
 
   return (
-    <Drawer 
-      variant="permanent" 
-      sx={{ 
-        width: 280, 
+    <Drawer
+      variant="permanent"
+      sx={{
+        width: 280,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: 280,
@@ -55,31 +55,26 @@ export default function Sidebar({ isAdmin }) {
               </ListItemButton>
               <Collapse in={expandedMenu === 'admin'} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                  <ListItemButton 
+                  <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/admin/tenants')}
                   >
                     <ListItemText primary="Tenant Management" />
                   </ListItemButton>
-                  <ListItemButton 
+                  <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/admin/users')}
                   >
                     <ListItemText primary="User Management" />
                   </ListItemButton>
-                  <ListItemButton 
-                    sx={{ pl: 4 }}
-                    onClick={() => handleNavigate('/admin/roles')}
-                  >
-                    <ListItemText primary="Role Management" />
-                  </ListItemButton>
-                  <ListItemButton 
+
+                  <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/admin/test-suites')}
                   >
                     <ListItemText primary="Test Suites" />
                   </ListItemButton>
-                  <ListItemButton 
+                  <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/admin/step-definitions')}
                   >
@@ -101,25 +96,25 @@ export default function Sidebar({ isAdmin }) {
               </ListItemButton>
               <Collapse in={expandedMenu === 'tenant'} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                  <ListItemButton 
+                  <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/tenant/test-suites')}
                   >
                     <ListItemText primary="Test Suites" />
                   </ListItemButton>
-                  <ListItemButton 
+                  <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/tenant/test-cases')}
                   >
                     <ListItemText primary="Test Cases" />
                   </ListItemButton>
-                  <ListItemButton 
+                  <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/tenant/execution')}
                   >
                     <ListItemText primary="Execution" />
                   </ListItemButton>
-                  <ListItemButton 
+                  <ListItemButton
                     sx={{ pl: 4 }}
                     onClick={() => handleNavigate('/tenant/reports')}
                   >

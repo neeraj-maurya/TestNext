@@ -17,7 +17,6 @@ import ExecutionView from './pages/ExecutionView'
 // Admin Pages
 import AdminTenantManagement from './pages/admin/AdminTenantManagement'
 import AdminUserManagement from './pages/admin/AdminUserManagement'
-import AdminRoleManagement from './pages/admin/AdminRoleManagement'
 import AdminTestSuites from './pages/admin/AdminTestSuites'
 import AdminStepDefinitions from './pages/admin/AdminStepDefinitions'
 
@@ -59,6 +58,8 @@ export default function App() {
     localStorage.removeItem('currentUser')
     localStorage.removeItem('currentRole')
     localStorage.removeItem('authHeader')
+    // Reset URL to root so next login redirects to default page instead of last visited page
+    window.history.replaceState(null, '', '/')
   }
 
   const isAdmin = role === 'ROLE_SYSTEM_ADMIN'
@@ -80,7 +81,7 @@ export default function App() {
                 <>
                   <Route path="/admin/tenants" element={<AdminTenantManagement />} />
                   <Route path="/admin/users" element={<AdminUserManagement />} />
-                  <Route path="/admin/roles" element={<AdminRoleManagement />} />
+                  <Route path="/admin/users" element={<AdminUserManagement />} />
                   <Route path="/admin/test-suites" element={<AdminTestSuites />} />
                   <Route path="/admin/step-definitions" element={<AdminStepDefinitions />} />
                 </>

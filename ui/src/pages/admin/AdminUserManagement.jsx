@@ -108,7 +108,7 @@ export default function AdminUserManagement() {
       fetchUsers()
     } catch (error) {
       console.error('Error saving user:', error)
-      alert('Failed to save user: ' + (error.response?.data?.error || error.message))
+      alert('Failed to save user: ' + error.message)
     }
   }
 
@@ -172,7 +172,8 @@ export default function AdminUserManagement() {
                     <IconButton
                       size="small"
                       onClick={() => handleDelete(user.id)}
-                      title="Delete"
+                      title={user.username === localStorage.getItem('currentUser') ? "Cannot delete yourself" : "Delete"}
+                      disabled={user.username === localStorage.getItem('currentUser')}
                     >
                       <DeleteOutlined fontSize="small" />
                     </IconButton>
