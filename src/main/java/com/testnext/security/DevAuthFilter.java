@@ -27,11 +27,14 @@ import java.util.Optional;
 public class DevAuthFilter extends OncePerRequestFilter {
 
     private final SystemUserRepository userRepo;
+    private final com.testnext.repository.TenantRepository tenantRepo;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public DevAuthFilter(SystemUserRepository userRepo,
+            com.testnext.repository.TenantRepository tenantRepo,
             org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
+        this.tenantRepo = tenantRepo;
         this.passwordEncoder = passwordEncoder;
         System.out.println("DevAuthFilter: Initialized!");
     }
@@ -91,12 +94,25 @@ public class DevAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    private boolean isTenantActive(SystemUser user) {
+        if (user.getTenantId() != null) {
+            var t = tenantRepo.findById(user.getTenantId());
+            if (t.isPresent() && !t.get().isActive()) {
+                System.out.println("DevAuthFilter: User tenant is inactive. Login blocked.");
+                return false;
+            }
+        }
+        return true;
+    }
+
     private Authentication authFromUsername(String username) {
         // Hardcoded checks removed. Only DB users allowed.
 
         Optional<SystemUser> u = userRepo.findByUsername(username);
         if (u.isPresent()) {
             SystemUser user = u.get();
+            if (!user.isActive() || !isTenantActive(user))
+                return null;
             String role = user.getRole();
             if (!role.startsWith("ROLE_"))
                 role = "ROLE_" + role;
@@ -110,6 +126,8 @@ public class DevAuthFilter extends OncePerRequestFilter {
         Optional<SystemUser> u = userRepo.findByApiKey(key);
         if (u.isPresent()) {
             SystemUser user = u.get();
+            if (!user.isActive() || !isTenantActive(user))
+                return null;
             String role = user.getRole();
             if (!role.startsWith("ROLE_"))
                 role = "ROLE_" + role;
@@ -127,6 +145,16 @@ public class DevAuthFilter extends OncePerRequestFilter {
         Optional<SystemUser> u = userRepo.findByUsername(username);
         if (u.isPresent()) {
             SystemUser user = u.get();
+
+            if (!user.isActive()) {
+                System.out.println("DevAuthFilter: User " + username + " is inactive. Login blocked.");
+                return null;
+            }
+
+            if (!isTenantActive(user)) {
+                return null;
+            }
+
             System.out.println("DevAuthFilter: User found in DB. Role: " + user.getRole());
 
             // Plain text password comparison as requested

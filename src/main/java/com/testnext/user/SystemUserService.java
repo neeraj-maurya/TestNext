@@ -33,9 +33,22 @@ public class SystemUserService {
     @Transactional
     public SystemUser create(SystemUser in) {
         validateRole(in.getRole());
+
+        // Tenant Validation
+        if (!"ROLE_SYSTEM_ADMIN".equals(in.getRole())) {
+            if (in.getTenantId() == null) {
+                throw new IllegalArgumentException("Tenant is required for role: " + in.getRole());
+            }
+        }
+
         if (in.getId() == null) {
             in.setId(UUID.randomUUID());
         }
+
+        if (in.getCreatedAt() == null) {
+            in.setCreatedAt(OffsetDateTime.now());
+        }
+
         if (in.getHashedPassword() != null && !in.getHashedPassword().isEmpty()) {
             // Store plain text password as requested
             in.setHashedPassword(in.getHashedPassword());
@@ -43,26 +56,58 @@ public class SystemUserService {
             // default password for dev/testing if none provided
             in.setHashedPassword(in.getUsername() + "123");
         }
+
+        // Ensure active is set (default is true in entity but good to be explicit if
+        // passed in JSON)
+        // in.isActive() is relied upon
+
         return repo.save(in);
     }
 
     @Transactional
     public SystemUser update(UUID id, SystemUser in) {
         return repo.findById(id).map(u -> {
+            // Handle Username Update
+            if (in.getUsername() != null && !in.getUsername().isBlank() && !in.getUsername().equals(u.getUsername())) {
+                if (repo.findByUsername(in.getUsername()).isPresent()) {
+                    throw new IllegalArgumentException("Username '" + in.getUsername() + "' is already taken.");
+                }
+                u.setUsername(in.getUsername());
+            }
+
             if (in.getEmail() != null)
                 u.setEmail(in.getEmail());
             if (in.getDisplayName() != null)
                 u.setDisplayName(in.getDisplayName());
 
+            // Allow updating tenantId
+            if (in.getTenantId() != null) {
+                u.setTenantId(in.getTenantId());
+            } else if ("ROLE_SYSTEM_ADMIN".equals(in.getRole())) {
+                // Admins can clear tenant? Maybe. For now allow explicit set.
+            }
+
+            // Update Active Status
+            u.setActive(in.isActive());
+
             if (in.getRole() != null && !in.getRole().equals(u.getRole())) {
                 validateRole(in.getRole());
+
+                // Tenant Validation for Role Change
+                if (!"ROLE_SYSTEM_ADMIN".equals(in.getRole())) {
+                    // New role requires tenant. Check if we have one.
+                    if (u.getTenantId() == null && in.getTenantId() == null) {
+                        throw new IllegalArgumentException("Tenant is required when changing to role: " + in.getRole());
+                    }
+                }
+
                 // Hierarchy Rule: Cannot demote the last System Admin
                 if ("ROLE_SYSTEM_ADMIN".equals(u.getRole())) {
                     long adminCount = repo.findAll().stream()
-                            .filter(user -> "ROLE_SYSTEM_ADMIN".equals(user.getRole()))
+                            .filter(user -> "ROLE_SYSTEM_ADMIN".equals(user.getRole()) && user.isActive())
                             .count();
                     if (adminCount <= 1) {
-                        throw new IllegalStateException("Cannot demote the last System Admin");
+                        throw new IllegalStateException("Cannot demote the last Active System Admin");
                     }
                 }
                 u.setRole(in.getRole());

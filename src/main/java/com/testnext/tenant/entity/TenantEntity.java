@@ -18,6 +18,17 @@ public class TenantEntity {
     @Column(name = "test_manager_id")
     private java.util.UUID testManagerId;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     public TenantEntity() {
     }
 

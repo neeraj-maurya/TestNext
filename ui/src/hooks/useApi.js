@@ -13,7 +13,7 @@ export const useApi = () => {
   const fetchWithAuth = async (endpoint, options = {}) => {
     const url = `${API_BASE}${endpoint}`;
     const authHeader = getAuthHeader();
-    
+
     const headers = {
       "Content-Type": "application/json",
       ...options.headers,
@@ -27,7 +27,7 @@ export const useApi = () => {
       ...options,
       headers,
     });
-    
+
     if (response.status === 401) {
       // Handle unauthorized (e.g., redirect to login)
       localStorage.removeItem('currentUser');
@@ -39,10 +39,15 @@ export const useApi = () => {
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
-    
+
     // Handle empty responses (like 204 No Content)
     const text = await response.text();
-    return text ? JSON.parse(text) : {};
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch (e) {
+      // If parsing fails, it might be plain text (e.g. API Key)
+      return text;
+    }
   };
 
   return {

@@ -9,8 +9,9 @@ import { useApi } from '../../hooks/useApi'
 
 export default function AdminUserManagement() {
   const [users, setUsers] = useState([])
+  const [tenants, setTenants] = useState([])
   const [formData, setFormData] = useState({
-    username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active'
+    username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: ''
   })
   const [openDialog, setOpenDialog] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -18,16 +19,26 @@ export default function AdminUserManagement() {
 
   useEffect(() => {
     fetchUsers()
+    fetchTenants()
   }, [])
 
   const fetchUsers = async () => {
     try {
       const data = await api.get('/api/system/users')
-      // backend may return {value: []} or []
       const list = Array.isArray(data) ? data : (data?.value || data)
       setUsers(list)
     } catch (error) {
       console.error('Error fetching users:', error)
+    }
+  }
+
+  const fetchTenants = async () => {
+    try {
+      const data = await api.get('/api/tenants')
+      const list = Array.isArray(data) ? data : (data?.value || data)
+      setTenants(list)
+    } catch (error) {
+      console.error('Error fetching tenants:', error)
     }
   }
 
@@ -37,14 +48,15 @@ export default function AdminUserManagement() {
         username: user.username || '',
         email: user.email || '',
         password: '',
-        displayName: user.display_name || '', // Note: backend returns display_name
+        displayName: user.display_name || user.displayName || '', // Fix display name read
         role: user.role || 'ROLE_VIEWER',
-        status: user.status || 'active'
+        status: user.active ? 'active' : 'inactive',
+        tenantId: user.tenantId || ''
       })
       setEditingId(user.id)
     } else {
       setFormData({
-        username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active'
+        username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: ''
       })
       setEditingId(null)
     }
@@ -53,7 +65,7 @@ export default function AdminUserManagement() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false)
-    setFormData({ username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active' })
+    setFormData({ username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: '' })
     setEditingId(null)
   }
 
@@ -73,11 +85,24 @@ export default function AdminUserManagement() {
       return
     }
 
+    // Client-side Tenant Validation
+    if (formData.role !== 'ROLE_SYSTEM_ADMIN' && !formData.tenantId) {
+      alert('Tenant is required for non-admin users.')
+      return
+    }
+
     try {
+      const payload = {
+        ...formData,
+        active: formData.status === 'active',
+        // Backend expects tenantId as null if empty string, or appropriate Long
+        tenantId: formData.tenantId ? parseInt(formData.tenantId) : null
+      }
+
       if (editingId) {
-        await api.put(`/api/system/users/${editingId}`, formData)
+        await api.put(`/api/system/users/${editingId}`, payload)
       } else {
-        await api.post('/api/system/users', formData)
+        await api.post('/api/system/users', payload)
       }
       handleCloseDialog()
       fetchUsers()
@@ -109,22 +134,33 @@ export default function AdminUserManagement() {
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                <TableCell><strong>ID</strong></TableCell>
+                <TableCell><strong>#</strong></TableCell>
                 <TableCell><strong>Username</strong></TableCell>
                 <TableCell><strong>Display Name</strong></TableCell>
                 <TableCell><strong>Role</strong></TableCell>
+                <TableCell><strong>Status</strong></TableCell>
+                <TableCell><strong>Tenant</strong></TableCell>
                 <TableCell align="center"><strong>Actions</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map(user => (
+              {users.map((user, index) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.id}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>{user.username}</TableCell>
                   <TableCell>{user.display_name || user.displayName}</TableCell>
                   <TableCell>
                     <Chip label={user.role} size="small" color={user.role === 'SYSTEM_ADMIN' ? 'primary' : 'default'} />
                   </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.active ? 'Active' : 'Inactive'}
+                      size="small"
+                      color={user.active ? 'success' : 'error'}
+                      variant={user.active ? 'filled' : 'outlined'}
+                    />
+                  </TableCell>
+                  <TableCell>{tenants.find(t => t.id === user.tenantId)?.name || '-'}</TableCell>
                   <TableCell align="center">
                     <IconButton
                       size="small"
@@ -197,6 +233,24 @@ export default function AdminUserManagement() {
               <MenuItem value="ROLE_TEST_ENGINEER">Test Engineer</MenuItem>
               <MenuItem value="ROLE_VIEWER">Viewer</MenuItem>
             </TextField>
+
+            <TextField
+              fullWidth
+              select
+              label="Tenant"
+              name="tenantId"
+              value={formData.tenantId}
+              onChange={handleInputChange}
+              required={formData.role !== 'ROLE_SYSTEM_ADMIN'}
+              disabled={formData.role === 'ROLE_SYSTEM_ADMIN'}
+              helperText={formData.role !== 'ROLE_SYSTEM_ADMIN' ? 'Required for non-admin users' : 'Disabled for System Admin'}
+            >
+              <MenuItem value=""><em>None (Global)</em></MenuItem>
+              {tenants.map(t => (
+                <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+              ))}
+            </TextField>
+
             <TextField
               fullWidth
               select

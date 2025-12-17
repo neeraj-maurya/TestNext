@@ -27,30 +27,32 @@ public class TenantService {
 
     @Transactional
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
-    public TenantDto create(String name, String schemaName, java.util.UUID testManagerId) {
+    public TenantDto create(String name, String schemaName, java.util.UUID testManagerId, boolean active) {
         TenantEntity e = new TenantEntity();
         e.setName(name);
         String safeSchema = schemaName == null ? name.toLowerCase().replaceAll("[^a-z0-9_]+", "_") : schemaName;
         e.setSchemaName(safeSchema);
         e.setTestManagerId(testManagerId);
+        e.setActive(active);
 
         TenantEntity saved = repo.save(e);
 
         // Initialize schema
         schemaInitializer.initialize(safeSchema);
 
-        return new TenantDto(saved.getId(), saved.getName(), saved.getSchemaName(), saved.getTestManagerId());
+        return new TenantDto(saved.getId(), saved.getName(), saved.getSchemaName(), saved.getTestManagerId(),
+                saved.isActive());
     }
 
     public List<TenantDto> list() {
         return repo.findAll().stream()
-                .map(e -> new TenantDto(e.getId(), e.getName(), e.getSchemaName(), e.getTestManagerId()))
+                .map(e -> new TenantDto(e.getId(), e.getName(), e.getSchemaName(), e.getTestManagerId(), e.isActive()))
                 .collect(Collectors.toList());
     }
 
     @Transactional
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
-    public TenantDto update(Long id, String name, String schemaName, java.util.UUID testManagerId) {
+    public TenantDto update(Long id, String name, String schemaName, java.util.UUID testManagerId, Boolean active) {
         var opt = repo.findById(id);
         if (opt.isEmpty())
             return null;
@@ -59,11 +61,16 @@ public class TenantService {
             e.setName(name);
         if (schemaName != null)
             e.setSchemaName(schemaName);
-        if (testManagerId != null)
-            e.setTestManagerId(testManagerId);
+
+        // Allow unsetting testManagerId (nullable)
+        e.setTestManagerId(testManagerId);
+
+        if (active != null)
+            e.setActive(active);
 
         TenantEntity saved = repo.save(e);
-        return new TenantDto(saved.getId(), saved.getName(), saved.getSchemaName(), saved.getTestManagerId());
+        return new TenantDto(saved.getId(), saved.getName(), saved.getSchemaName(), saved.getTestManagerId(),
+                saved.isActive());
     }
 
     @Transactional

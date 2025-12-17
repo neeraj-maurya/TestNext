@@ -33,10 +33,34 @@ public class SystemUser {
     @Column(name = "api_key", unique = true)
     private String apiKey;
 
+    @Column(name = "tenant_id")
+    private Long tenantId;
+
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
     // getters/setters
+    // ... previous getters/setters ...
+
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     public UUID getId() {
         return id;
     }

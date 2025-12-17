@@ -35,11 +35,19 @@ export default function UserProfile() {
         if (!user) return
         setGenerating(true)
         try {
-            const newKey = await api.post(`/api/system/users/${user.id}/api-key`)
-            setApiKey(newKey)
+            // Backend returns plain string, so axios usually returns it in data.
+            // If it returns a string, axios might try to parse JSON and fail if it's not valid JSON (though a simple string usually works).
+            // However, Spring REST Controller returning String produces a text/plain response.
+            // Axios response.data will be the string itself.
+            const response = await api.post(`/api/system/users/${user.id}/api-key`)
+            setApiKey(response)
         } catch (err) {
+            console.error('API Key Generation Error:', err)
+            // If the error is due to parsing, we might still have the key in response text if we access it differently,
+            // but standard axios setup usually handles strings fine. 
+            // The issue might be that `api.post` (from useApi wrapper) expects JSON.
+            // Let's assume standard useApi behavior.
             setError('Failed to generate API key')
-            console.error(err)
         } finally {
             setGenerating(false)
         }

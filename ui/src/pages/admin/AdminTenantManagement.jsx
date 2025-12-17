@@ -15,7 +15,7 @@ const MOCK_TENANTS = [
 export default function AdminTenantManagement() {
   const [tenants, setTenants] = useState(MOCK_TENANTS)
   const [users, setUsers] = useState([])
-  const [formData, setFormData] = useState({ name: '', schemaName: '', testManagerId: '' })
+  const [formData, setFormData] = useState({ name: '', schemaName: '', testManagerId: '', active: true })
   const [openDialog, setOpenDialog] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const api = useApi()
@@ -57,11 +57,12 @@ export default function AdminTenantManagement() {
       setFormData({
         name: tenant.name,
         schemaName: tenant.schemaName,
-        testManagerId: tenant.testManagerId || ''
+        testManagerId: tenant.testManagerId || '',
+        active: tenant.active !== undefined ? tenant.active : true
       })
       setEditingId(tenant.id)
     } else {
-      setFormData({ name: '', schemaName: '', testManagerId: '' })
+      setFormData({ name: '', schemaName: '', testManagerId: '', active: true })
       setEditingId(null)
     }
     setOpenDialog(true)
@@ -69,7 +70,7 @@ export default function AdminTenantManagement() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false)
-    setFormData({ name: '', schemaName: '', testManagerId: '' })
+    setFormData({ name: '', schemaName: '', testManagerId: '', active: true })
     setEditingId(null)
   }
 
@@ -81,7 +82,7 @@ export default function AdminTenantManagement() {
   const handleSave = async () => {
     try {
       const payload = { ...formData }
-      if (!payload.testManagerId) delete payload.testManagerId; // Don't send empty string if UUID expected
+      if (!payload.testManagerId) payload.testManagerId = null; // Send null to unassign
 
       if (editingId) {
         await api.put(`/api/tenants/${editingId}`, payload)
@@ -141,7 +142,7 @@ export default function AdminTenantManagement() {
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                <TableCell><strong>ID</strong></TableCell>
+                <TableCell><strong>#</strong></TableCell>
                 <TableCell><strong>Name</strong></TableCell>
                 <TableCell><strong>Schema</strong></TableCell>
                 <TableCell><strong>Test Manager</strong></TableCell>
@@ -150,14 +151,19 @@ export default function AdminTenantManagement() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {tenants.map(tenant => (
+              {tenants.map((tenant, index) => (
                 <TableRow key={tenant.id}>
-                  <TableCell>{tenant.id}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>{tenant.name}</TableCell>
                   <TableCell><code>{tenant.schemaName}</code></TableCell>
                   <TableCell>{getManagerName(tenant.testManagerId)}</TableCell>
                   <TableCell>
-                    <Chip label="Active" color="success" size="small" />
+                    <Chip
+                      label={tenant.active ? 'Active' : 'Inactive'}
+                      size="small"
+                      color={tenant.active ? 'success' : 'error'}
+                      variant={tenant.active ? 'filled' : 'outlined'}
+                    />
                   </TableCell>
                   <TableCell align="center">
                     <IconButton
@@ -210,11 +216,25 @@ export default function AdminTenantManagement() {
                 onChange={handleInputChange}
               >
                 <MenuItem value=""><em>None</em></MenuItem>
-                {users.map(u => (
-                  <MenuItem key={u.id} value={u.id}>
-                    {u.displayName || u.username} ({u.role})
-                  </MenuItem>
-                ))}
+                {users
+                  .filter(u => u.role === 'ROLE_TEST_MANAGER' && u.tenantId === editingId)
+                  .map(u => (
+                    <MenuItem key={u.id} value={u.id}>
+                      {u.username}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                name="active"
+                value={formData.active}
+                label="Status"
+                onChange={handleInputChange}
+              >
+                <MenuItem value={true}>Active</MenuItem>
+                <MenuItem value={false}>Inactive</MenuItem>
               </Select>
             </FormControl>
           </Box>
