@@ -1,0 +1,61 @@
+---
+type: onboarding
+title: TestNext Development Rules & Onboarding Context
+description: Core repository context, commands, architectures, and guidelines for developer agents to minimize context setup time and token consumption.
+tags: [onboarding, guidelines, rules, spring-boot, react, maven]
+version: 1.0.0
+---
+
+# TestNext Developer Context & Rules
+
+## Project Context
+- **Product**: TestNext — SaaS Test Automation Framework (POC).
+- **Backend Stack**: Java 24, Spring Boot 3.5.x, Maven 3.9.x, H2 (for dev/test profile), PostgreSQL (production/Docker Compose), Flyway migrations.
+- **Frontend Stack**: React 18.2.0, Vite 5.4.x, Material-UI 5.x.
+- **Key Accounts**: Pre-seeded Admin (`neera` / `neera@example.com` / ROLE_SYSTEM_ADMIN) via Flyway `V5__create_system_admin.sql`.
+
+---
+
+## Workspace Layout & Key Paths
+- **Backend Java Code**: [src/main/java/com/testnext/](file:///c:/Users/neera/VSCodeProjects/TestNext/src/main/java/com/testnext/)
+- **DB Migrations**: [src/main/resources/db/migration/](file:///c:/Users/neera/VSCodeProjects/TestNext/src/main/resources/db/migration/) (V1-V5 currently active)
+- **Frontend App**: [ui/](file:///c:/Users/neera/VSCodeProjects/TestNext/ui/) (Vite + React proxying `/api` -> `http://localhost:8080`)
+- **Docker Compose**: [docker-compose.yml](file:///c:/Users/neera/VSCodeProjects/TestNext/docker-compose.yml) and [Dockerfile](file:///c:/Users/neera/VSCodeProjects/TestNext/Dockerfile)
+
+---
+
+## Critical Commands
+
+### Backend
+- **Build Package**: `mvn clean package -DskipTests` (fast build)
+- **Run (Dev profile)**: `java -jar target/testnext-0.1.0-SNAPSHOT.jar --spring.profiles.active=dev` (starts H2 dev DB on port 8080)
+- **Run Tests**: `mvn clean test`
+
+### Frontend (UI)
+- **Install deps**: `npm install` (in `ui/` directory)
+- **Run Dev Server**: `npm run dev` (in `ui/` directory, starts server on port 5173)
+
+---
+
+## Development & Coding Standards
+
+### General Rules
+1. **No Placeholders**: Do not write mock UI or logic placeholders. Write complete, working solutions.
+2. **Docs & Comments**: Maintain existing code comments and Javadocs. Update or add detailed documentation when updating functionality.
+3. **Verification**: Always compile/build and verify changes by running tests via Maven before finalizing.
+
+### Backend/Database Patterns
+1. **Migrations**: Never modify existing Flyway migration files (`V1` to `V5`). To change database schema, add a new migration file with sequential version (e.g. `V6__description.sql`).
+2. **Persistence Adapter**: Currently, `ExecutionRepositoryI` is implemented by `JpaExecutionRepositoryAdapter`, which wraps `JdbcExecutionRepository` to delegate to standard JDBC template queries. When refactoring to pure JPA, update this repository.
+3. **Database Profiles**: Default active profile for local dev is `dev` (H2 database). Production setup uses PostgreSQL.
+
+### Frontend/UI Patterns
+1. **Design System**: Use Material-UI (MUI) components.
+2. **API Proxy**: Do not hardcode `http://localhost:8080` in frontend requests. Use relative paths starting with `/api`, which Vite proxies automatically based on `ui/vite.config.js`.
+3. **Session State**: React mock login uses session storage for the logged-in user.
+
+---
+
+## Context Loading & Token Optimization
+- Coding agents automatically load this file (`.cursorrules`) as system context at startup.
+- Read this file alongside [README.md](file:///c:/Users/neera/VSCodeProjects/TestNext/README.md) to understand dependencies, endpoints, and setup.

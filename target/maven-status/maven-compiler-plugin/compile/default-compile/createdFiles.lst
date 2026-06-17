@@ -1,5 +1,6 @@
 com\testnext\plugin\package-info.class
 com\testnext\api\dto\ExecutionDto$ExecutionStepDto.class
+com\testnext\service\TenantService.class
 com\testnext\audit\package-info.class
 com\testnext\service\InMemoryStorage.class
 com\testnext\audit\AuditInterceptor.class
@@ -7,16 +8,17 @@ com\testnext\api\controller\ApiTestSuitesController.class
 com\testnext\permissions\package-info.class
 com\testnext\execution\package-info.class
 com\testnext\api\dto\TestDto$TestStepDto.class
+com\testnext\api\controller\TenantController.class
 com\testnext\repository\TestRepository.class
 com\testnext\model\TestStepEntity.class
 com\testnext\security\DevAuthFilter.class
+com\testnext\api\GlobalExceptionHandler.class
 com\testnext\api\dto\TenantDto.class
 com\testnext\execution\dto\RerunRequest.class
 com\testnext\security\TestSecurityService.class
 com\testnext\execution\StartupRegistrar.class
 com\testnext\execution\SystemStepExecutor.class
 com\testnext\tenant\TenantFilter.class
-com\testnext\db\DatabaseInitializer.class
 com\testnext\execution\SystemStepScanner.class
 com\testnext\repository\TenantRepository.class
 com\testnext\repository\ProjectRepository.class
