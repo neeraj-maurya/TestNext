@@ -19,7 +19,7 @@ export default function Login({ onLogin }) {
     try {
       const authHeader = 'Basic ' + btoa(username + ':' + password)
 
-      const response = await fetch('http://localhost:8080/api/system/users/me', {
+      const response = await fetch('/api/system/users/me', {
         headers: {
           'Authorization': authHeader
         }
@@ -69,7 +69,7 @@ export default function Login({ onLogin }) {
                 label="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyPress}
                 autoFocus
                 disabled={loading}
               />
@@ -79,7 +79,7 @@ export default function Login({ onLogin }) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyPress}
                 disabled={loading}
               />
               <Button

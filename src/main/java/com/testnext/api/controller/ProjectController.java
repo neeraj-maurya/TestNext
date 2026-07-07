@@ -18,7 +18,7 @@ public class ProjectController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or @tenantSecurity.isTestManagerForTenant(authentication, #tenantId)")
     public ProjectDto create(@PathVariable Long tenantId, @RequestBody ProjectDto in) {
         return svc.create(tenantId, in.name, in.description);
     }
@@ -32,7 +32,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{projectId}/assignments")
-    @PreAuthorize("@tenantSecurity.isManager(authentication, #tenantId)")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or @tenantSecurity.isTestManagerForTenant(authentication, #tenantId)")
     public void updateAssignments(@PathVariable Long tenantId, @PathVariable Long projectId,
             @RequestBody List<java.util.UUID> userIds) {
         svc.updateAssignments(projectId, userIds);

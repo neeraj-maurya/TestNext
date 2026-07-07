@@ -7,6 +7,8 @@ import java.util.Map;
 @Component
 public class TradeSteps {
 
+        private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TradeSteps.class);
+
         @TestStep(id = "trade.bookTrade", name = "Book a Trade", description = "Book a trade with specified parameters")
         public Map<String, Object> bookTrade(Map<String, Object> params) {
                 String securityId = (String) params.get("security_id");
@@ -17,7 +19,7 @@ public class TradeSteps {
                 String side = (String) params.get("side");
 
                 // Simulate booking logic
-                System.out.println("Booking trade: " + side + " " + quantity + " " + securityId + " @ " + price);
+                log.debug("Booking trade: {} {} {} @ {}", side, quantity, securityId, price);
 
                 return Map.of(
                                 "tradeId", "TRD-" + System.currentTimeMillis(),

@@ -39,7 +39,7 @@ public class TestSuiteAndCaseApiTest {
         @Autowired
         private WebApplicationContext webApplicationContext;
 
-        private ObjectMapper objectMapper = new ObjectMapper();
+        private ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         private Long projectId;
         private Long suiteId;
         private String testManagerUsername;

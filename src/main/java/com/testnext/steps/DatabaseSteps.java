@@ -7,9 +7,11 @@ import java.util.Map;
 @Component
 public class DatabaseSteps {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DatabaseSteps.class);
+
     @TestStep(id = "db.runSql", name = "Run SQL Query", description = "Executes a SQL query against the connected database")
     public void runSql(String query) {
-        System.out.println("Executing SQL: " + query);
+        log.debug("Executing SQL: {}", query);
     }
 
     @TestStep(id = "db.validateFields", name = "Validate DB Fields", description = "Validate that a record in the database matches expected values")
@@ -20,7 +22,7 @@ public class DatabaseSteps {
         Map<String, Object> expected = (Map<String, Object>) params.get("expected_values");
 
         // Simulate DB validation
-        System.out.println("Validating table " + tableName + " id " + idInfo);
+        log.debug("Validating table {} id {}", tableName, idInfo);
 
         // In a real implementation, we would query the DB here
         boolean match = true; // simulate success

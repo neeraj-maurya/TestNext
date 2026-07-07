@@ -7,14 +7,10 @@ import {
 import { DeleteOutlined, EditOutlined, PlayArrowOutlined } from '@mui/icons-material'
 import { useApi } from '../../hooks/useApi'
 
-const MOCK_SUITES = [
-  { id: 1, name: 'Login Tests', description: 'Test user authentication flows', projectId: 1, testCount: 5 },
-  { id: 2, name: 'Payment Processing', description: 'Test payment gateway integration', projectId: 1, testCount: 8 },
-  { id: 3, name: 'Trade Execution', description: 'Test trade execution workflow', projectId: 2, testCount: 12 },
-]
 
 export default function AdminTestSuites() {
-  const [suites, setSuites] = useState(MOCK_SUITES)
+  const [suites, setSuites] = useState([])
+  const [loadError, setLoadError] = useState('')
   const [formData, setFormData] = useState({ name: '', description: '', projectId: 1 })
   const [openDialog, setOpenDialog] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -27,10 +23,11 @@ export default function AdminTestSuites() {
   const fetchSuites = async () => {
     try {
       const response = await api.get('/api/test-suites')
-      setSuites(Array.isArray(response) ? response : (response?.value || MOCK_SUITES))
+      setSuites(Array.isArray(response) ? response : (response?.value || []))
     } catch (error) {
-      console.error('Error fetching test suites, using mock data:', error)
-      setSuites(MOCK_SUITES)
+      console.error('Error fetching test suites:', error)
+      setLoadError('Failed to load test suites. Is the backend running?')
+      setSuites([])
     }
   }
 
@@ -115,10 +112,10 @@ export default function AdminTestSuites() {
 
   const fetchSteps = async () => {
     try {
-      const data = await api.get('/api/step-definitions')
+      const data = await api.get('/api/test-steps-library')
       setAvailableSteps(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Error fetching steps:', error)
+      console.error('Error fetching step definitions:', error)
     }
   }
 
@@ -153,6 +150,11 @@ export default function AdminTestSuites() {
         action={<Button variant="contained" onClick={() => handleOpenDialog()}>Add Suite</Button>}
       />
       <CardContent>
+        {loadError && (
+          <div style={{ color: '#d32f2f', marginBottom: 12, padding: '8px 12px', background: '#ffebee', borderRadius: 4 }}>
+            {loadError}
+          </div>
+        )}
         <TableContainer component={Paper}>
           <Table>
             <TableHead>

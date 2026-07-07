@@ -6,12 +6,16 @@ spring:
     password: ""
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+  sql:
+    init:
+      mode: never  # Do not run data.sql in tests — tests use schema.sql via Flyway/ddl-auto
   flyway:
     enabled: true
     locations: classpath:db/migration

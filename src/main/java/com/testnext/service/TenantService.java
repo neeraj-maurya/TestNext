@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class TenantService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TenantService.class);
+
     private final TenantRepository repo;
     private final SchemaInitializer schemaInitializer;
 
@@ -91,7 +93,7 @@ public class TenantService {
             }
             // Use String.format for logging/debugging, but strictly validated
             String sql = "DROP SCHEMA IF EXISTS \"" + schemaName + "\" CASCADE";
-            System.out.println("TenantService: Dropping schema: " + schemaName);
+            log.info("TenantService: Dropping schema: {}", schemaName);
             jdbcTemplate.execute(sql);
         }
     }

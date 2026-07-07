@@ -36,7 +36,7 @@ public class TenantApiTest {
         @Autowired
         private WebApplicationContext webApplicationContext;
 
-        private ObjectMapper objectMapper = new ObjectMapper();
+        private ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         private UUID testManagerId;
 
         @BeforeEach

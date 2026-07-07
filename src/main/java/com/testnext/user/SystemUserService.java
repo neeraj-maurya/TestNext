@@ -37,13 +37,6 @@ public class SystemUserService {
     public SystemUser create(SystemUser in) {
         validateRole(in.getRole());
 
-        // Tenant Validation
-        if (!"ROLE_SYSTEM_ADMIN".equals(in.getRole())) {
-            if (in.getTenantId() == null) {
-                throw new IllegalArgumentException("Tenant is required for role: " + in.getRole());
-            }
-        }
-
         if (in.getId() == null) {
             in.setId(UUID.randomUUID());
         }
@@ -53,9 +46,9 @@ public class SystemUserService {
         }
 
         if (in.getHashedPassword() != null && !in.getHashedPassword().isEmpty()) {
-            in.setHashedPassword(in.getHashedPassword());
+            in.setHashedPassword(passwordEncoder.encode(in.getHashedPassword()));
         } else {
-            in.setHashedPassword(in.getUsername() + "123");
+            throw new IllegalArgumentException("Password is required when creating a user.");
         }
 
         SystemUser saved = repo.save(in);
@@ -101,13 +94,6 @@ public class SystemUserService {
 
             if (in.getRole() != null && !in.getRole().equals(u.getRole())) {
                 validateRole(in.getRole());
-
-                // Tenant Validation for Role Change
-                if (!"ROLE_SYSTEM_ADMIN".equals(in.getRole())) {
-                    if (u.getTenantId() == null && in.getTenantId() == null) {
-                        throw new IllegalArgumentException("Tenant is required when changing to role: " + in.getRole());
-                    }
-                }
 
                 if ("ROLE_SYSTEM_ADMIN".equals(u.getRole())) {
                     long adminCount = repo.findAll().stream()

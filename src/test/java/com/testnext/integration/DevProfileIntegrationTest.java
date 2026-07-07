@@ -20,7 +20,6 @@ import org.springframework.http.MediaType;
 
 @SpringBootTest(classes = com.testnext.config.TestAppConfig.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles({ "dev", "test" })
-@Sql("/schema.sql")
 public class DevProfileIntegrationTest {
 
     private MockMvc mockMvc;

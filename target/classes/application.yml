@@ -10,13 +10,18 @@ spring:
   flyway:
     enabled: false # we'll run tenant migrations programmatically per schema
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    defer-datasource-initialization: true  # Let Hibernate create tables before data.sql runs
     hibernate:
       ddl-auto: update
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+  sql:
+    init:
+      mode: always  # Run data-postgres.sql on non-embedded databases
+      platform: postgres
 
 # Observability and monitoring
 management:

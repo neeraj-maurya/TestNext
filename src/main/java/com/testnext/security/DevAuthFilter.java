@@ -19,12 +19,15 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Development-friendly authentication filter.
- * Accepts `X-TestNext-User` header to impersonate any user.
- * Also accepts `x-api-key` or Basic auth for legacy/simple tests.
+ * Authentication filter supporting multiple credential schemes:
+ * 1. X-TestNext-User header — user impersonation (dev/test only, no password required)
+ * 2. x-api-key header — API key authentication
+ * 3. Authorization: Basic — username/password authentication (BCrypt verified)
  */
 @Component
 public class DevAuthFilter extends OncePerRequestFilter {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DevAuthFilter.class);
 
     private final SystemUserRepository userRepo;
     private final com.testnext.repository.TenantRepository tenantRepo;
@@ -36,23 +39,16 @@ public class DevAuthFilter extends OncePerRequestFilter {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
         this.passwordEncoder = passwordEncoder;
-        System.out.println("DevAuthFilter: Initialized!");
+        log.debug("DevAuthFilter: Initialized");
     }
-
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DevAuthFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        log.info("DevAuthFilter: Processing {} {}", request.getMethod(), request.getRequestURI());
-        java.util.Enumeration<String> headerNames = request.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String headerName = headerNames.nextElement();
-            log.info("Header: {} = {}", headerName, request.getHeader(headerName));
-        }
+        log.debug("DevAuthFilter: Processing {} {}", request.getMethod(), request.getRequestURI());
 
         try {
-            // 1. Check for User Switching Header
+            // 1. Check for User Switching Header (dev/test impersonation — no password required)
             String switchUser = request.getHeader("X-TestNext-User");
             if (switchUser != null && !switchUser.isBlank()) {
                 Authentication auth = authFromUsername(switchUser.trim());
@@ -98,7 +94,7 @@ public class DevAuthFilter extends OncePerRequestFilter {
         if (user.getTenantId() != null) {
             var t = tenantRepo.findById(user.getTenantId());
             if (t.isPresent() && !t.get().isActive()) {
-                System.out.println("DevAuthFilter: User tenant is inactive. Login blocked.");
+                log.warn("DevAuthFilter: Login blocked — tenant {} is inactive for user {}", user.getTenantId(), user.getUsername());
                 return false;
             }
         }
@@ -106,16 +102,12 @@ public class DevAuthFilter extends OncePerRequestFilter {
     }
 
     private Authentication authFromUsername(String username) {
-        // Hardcoded checks removed. Only DB users allowed.
-
         Optional<SystemUser> u = userRepo.findByUsername(username);
         if (u.isPresent()) {
             SystemUser user = u.get();
             if (!user.isActive() || !isTenantActive(user))
                 return null;
-            String role = user.getRole();
-            if (!role.startsWith("ROLE_"))
-                role = "ROLE_" + role;
+            String role = normaliseRole(user.getRole());
             return new UsernamePasswordAuthenticationToken(user.getUsername(), null,
                     List.of(new SimpleGrantedAuthority(role)));
         }
@@ -128,9 +120,7 @@ public class DevAuthFilter extends OncePerRequestFilter {
             SystemUser user = u.get();
             if (!user.isActive() || !isTenantActive(user))
                 return null;
-            String role = user.getRole();
-            if (!role.startsWith("ROLE_"))
-                role = "ROLE_" + role;
+            String role = normaliseRole(user.getRole());
             return new UsernamePasswordAuthenticationToken(user.getUsername(), null,
                     List.of(new SimpleGrantedAuthority(role)));
         }
@@ -138,41 +128,39 @@ public class DevAuthFilter extends OncePerRequestFilter {
     }
 
     private Authentication authFromBasic(String username, String password) {
-        System.out.println("DevAuthFilter: Attempting Basic Auth for user: " + username);
-
-        // Hardcoded bootstrap logic removed.
+        log.debug("DevAuthFilter: Attempting Basic Auth for user: {}", username);
 
         Optional<SystemUser> u = userRepo.findByUsername(username);
-        if (u.isPresent()) {
-            SystemUser user = u.get();
-
-            if (!user.isActive()) {
-                System.out.println("DevAuthFilter: User " + username + " is inactive. Login blocked.");
-                return null;
-            }
-
-            if (!isTenantActive(user)) {
-                return null;
-            }
-
-            System.out.println("DevAuthFilter: User found in DB. Role: " + user.getRole());
-
-            // Plain text password comparison as requested
-            if (password.equals(user.getHashedPassword())) {
-                System.out.println("DevAuthFilter: Password matches (plain text)");
-                String role = user.getRole();
-                if (!role.startsWith("ROLE_"))
-                    role = "ROLE_" + role;
-                return new UsernamePasswordAuthenticationToken(user.getUsername(), null,
-                        List.of(new SimpleGrantedAuthority(role)));
-            } else {
-                System.out.println("DevAuthFilter: Password mismatch. Stored: " + user.getHashedPassword()
-                        + ", Provided: " + password);
-                return null;
-            }
-        } else {
-            System.out.println("DevAuthFilter: User not found in DB");
+        if (u.isEmpty()) {
+            log.debug("DevAuthFilter: User '{}' not found in DB", username);
+            return null;
         }
-        return null;
+
+        SystemUser user = u.get();
+
+        if (!user.isActive()) {
+            log.warn("DevAuthFilter: Login blocked — user '{}' is inactive", username);
+            return null;
+        }
+
+        if (!isTenantActive(user)) {
+            return null;
+        }
+
+        // Verify password with BCrypt
+        if (passwordEncoder.matches(password, user.getHashedPassword())) {
+            log.debug("DevAuthFilter: Password verified for user '{}', role: {}", username, user.getRole());
+            String role = normaliseRole(user.getRole());
+            return new UsernamePasswordAuthenticationToken(user.getUsername(), null,
+                    List.of(new SimpleGrantedAuthority(role)));
+        } else {
+            log.warn("DevAuthFilter: Password mismatch for user '{}'", username);
+            return null;
+        }
+    }
+
+    /** Ensures role always has the ROLE_ prefix expected by Spring Security. */
+    private String normaliseRole(String role) {
+        return role.startsWith("ROLE_") ? role : "ROLE_" + role;
     }
 }

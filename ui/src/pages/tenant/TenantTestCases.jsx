@@ -7,13 +7,10 @@ import {
 import { PlayArrowOutlined } from '@mui/icons-material'
 import { useApi } from '../../hooks/useApi'
 
-const MOCK_SUITES = [
-  { id: 1, name: 'Login Tests', description: 'Test user authentication', projectId: 1, testCount: 5 },
-  { id: 2, name: 'Payment Tests', description: 'Test payment flows', projectId: 1, testCount: 8 },
-]
 
 export default function TenantTestCases() {
-  const [suites, setSuites] = useState(MOCK_SUITES)
+  const [suites, setSuites] = useState([])
+  const [loadError, setLoadError] = useState('')
   const api = useApi()
 
   useEffect(() => {
@@ -28,11 +25,12 @@ export default function TenantTestCases() {
       } else if (response?.value) {
         setSuites(response.value)
       } else {
-        setSuites(MOCK_SUITES)
+        setSuites([])
       }
     } catch (error) {
       console.error('Error fetching test suites:', error)
-      setSuites(MOCK_SUITES)
+      setLoadError('Failed to load test suites. Is the backend running?')
+      setSuites([])
     }
   }
 
@@ -66,10 +64,10 @@ export default function TenantTestCases() {
 
   const fetchSteps = async () => {
     try {
-      const data = await api.get('/api/step-definitions')
+      const data = await api.get('/api/test-steps-library')
       setAvailableSteps(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Error fetching steps:', error)
+      console.error('Error fetching step definitions:', error)
     }
   }
 
@@ -138,6 +136,11 @@ export default function TenantTestCases() {
         subheader="Browse and run test suites"
       />
       <CardContent>
+        {loadError && (
+          <div style={{ color: '#d32f2f', marginBottom: 12, padding: '8px 12px', background: '#ffebee', borderRadius: 4 }}>
+            {loadError}
+          </div>
+        )}
         <TableContainer component={Paper}>
           <Table>
             <TableHead>

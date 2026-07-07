@@ -43,7 +43,11 @@ public class TenantSecurityService {
             return true;
         }
 
-        return tenantId != null && tenantId.equals(user.getTenantId());
+        if (tenantId != null && tenantId.equals(user.getTenantId())) {
+            return true;
+        }
+
+        return isTestManagerForTenant(auth, tenantId);
     }
 
     public boolean hasAccess(Authentication auth, Long tenantId) {

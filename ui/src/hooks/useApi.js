@@ -1,9 +1,11 @@
 /**
- * Custom hook for API calls with x-api-key header.
- * Automatically selects the correct API key based on the current user role.
+ * Custom hook for API calls with authentication headers.
+ * Uses relative paths so requests are forwarded through the Vite dev proxy
+ * defined in vite.config.js (/api -> http://localhost:8080).
+ * In production, requests are served from the same origin — no CORS needed.
  */
 export const useApi = () => {
-  const API_BASE = "http://localhost:8080";
+  const API_BASE = ""; // Relative — routed via Vite proxy in dev, same-origin in prod
 
   // Get auth header from localStorage
   const getAuthHeader = () => {

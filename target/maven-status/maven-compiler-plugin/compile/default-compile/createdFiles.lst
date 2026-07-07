@@ -2,7 +2,6 @@ com\testnext\plugin\package-info.class
 com\testnext\api\dto\ExecutionDto$ExecutionStepDto.class
 com\testnext\service\TenantService.class
 com\testnext\audit\package-info.class
-com\testnext\service\InMemoryStorage.class
 com\testnext\audit\AuditInterceptor.class
 com\testnext\api\controller\ApiTestSuitesController.class
 com\testnext\permissions\package-info.class
@@ -42,7 +41,6 @@ com\testnext\execution\TestStepRepository.class
 com\testnext\steps\TradeSteps.class
 com\testnext\service\StepDefinitionService$1.class
 com\testnext\user\SystemUserController.class
-com\testnext\execution\ExecutionService.class
 com\testnext\service\ExecutionService$1.class
 com\testnext\steps\DatabaseSteps.class
 com\testnext\db\TenantRoutingDataSource.class
