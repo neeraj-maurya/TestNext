@@ -46,9 +46,10 @@ There are four system roles. All roles are stored with the `ROLE_` prefix in the
 | Role | Constant | Access Level |
 |---|---|---|
 | System Admin | `ROLE_SYSTEM_ADMIN` | Full access — tenants, users, all projects |
-| Test Manager | `ROLE_TEST_MANAGER` | Tenant-scoped — manages projects, suites, users within their tenant |
-| Test Engineer | `ROLE_TEST_ENGINEER` | Tenant-scoped — creates/runs tests |
-| Viewer | `ROLE_VIEWER` | Read-only access within their tenant |
+| Tenant Manager | `ROLE_TENANT_MANAGER` | Tenant-scoped — manages projects, suites, users within their tenant |
+| Project Manager | `ROLE_PROJECT_MANAGER` | Project-scoped — manages specific projects they have access to |
+| Test Engineer | `ROLE_TEST_ENGINEER` | Project-scoped — creates/runs tests |
+| Viewer | `ROLE_VIEWER` | Read-only access within their project |
 
 ---
 

@@ -15,8 +15,8 @@ public class TenantEntity {
     @Column(name = "schema_name", nullable = false, unique = true)
     private String schemaName;
 
-    @Column(name = "test_manager_id")
-    private java.util.UUID testManagerId;
+    @Column(name = "tenant_manager_id")
+    private java.util.UUID tenantManagerId;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -56,11 +56,11 @@ public class TenantEntity {
         this.schemaName = schemaName;
     }
 
-    public java.util.UUID getTestManagerId() {
-        return testManagerId;
+    public java.util.UUID getTenantManagerId() {
+        return tenantManagerId;
     }
 
-    public void setTestManagerId(java.util.UUID testManagerId) {
-        this.testManagerId = testManagerId;
+    public void setTenantManagerId(java.util.UUID tenantManagerId) {
+        this.tenantManagerId = tenantManagerId;
     }
 }

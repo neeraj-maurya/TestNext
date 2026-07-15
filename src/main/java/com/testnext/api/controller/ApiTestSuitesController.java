@@ -16,22 +16,26 @@ import java.util.stream.Collectors;
 public class ApiTestSuitesController {
     private final TestSuiteRepository suiteRepo;
     private final TestRepository testRepo;
+    private final com.testnext.repository.ProjectRepository projectRepo;
 
-    public ApiTestSuitesController(TestSuiteRepository suiteRepo, TestRepository testRepo) {
+    public ApiTestSuitesController(TestSuiteRepository suiteRepo, TestRepository testRepo, com.testnext.repository.ProjectRepository projectRepo) {
         this.suiteRepo = suiteRepo;
         this.testRepo = testRepo;
+        this.projectRepo = projectRepo;
     }
 
     @GetMapping
     public List<Map<String, Object>> list() {
         var suites = suiteRepo.findAll();
         var tests = testRepo.findAll();
+        var projects = projectRepo.findAll().stream().collect(Collectors.toMap(p -> p.getId(), p -> p.getName()));
         var counts = tests.stream().collect(Collectors.groupingBy(t -> t.suiteId, Collectors.counting()));
         return suites.stream().map(s -> Map.<String,Object>of(
                 "id", s.id,
                 "projectId", s.projectId,
+                "projectName", projects.getOrDefault(s.projectId, "Unknown"),
                 "name", s.name,
-                "description", s.description,
+                "description", s.description != null ? s.description : "",
                 "testCount", counts.getOrDefault(s.id, 0L)
         )).collect(Collectors.toList());
     }

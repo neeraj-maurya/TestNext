@@ -55,7 +55,7 @@ public class TestSuiteAndCaseApiTest {
                 testManager.setUsername("tm_suite_" + UUID.randomUUID());
                 testManager.setEmail("tm_suite@example.com");
                 testManager.setHashedPassword("password123");
-                testManager.setRole("ROLE_TEST_MANAGER");
+                testManager.setRole("ROLE_TENANT_MANAGER");
 
                 MvcResult userResult = mockMvc.perform(post("/api/system/users")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -72,7 +72,7 @@ public class TestSuiteAndCaseApiTest {
                 TenantDto tenant = new TenantDto();
                 tenant.name = "Suite Test Tenant";
                 tenant.schemaName = "suite_schema_" + UUID.randomUUID().toString().replace("-", "");
-                tenant.testManagerId = createdManager.getId();
+                tenant.tenantManagerId = createdManager.getId();
 
                 MvcResult tenantResult = mockMvc.perform(post("/api/tenants")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -94,7 +94,7 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(project))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -114,7 +114,7 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(suite))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").exists())
                                 .andExpect(jsonPath("$.name").value("Smoke Test Suite"))
@@ -133,14 +133,14 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(suite))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk());
 
                 // List suites
                 mockMvc.perform(get("/api/projects/" + projectId + "/suites")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$").isArray())
                                 .andExpect(jsonPath("$[0].name").value("List Test Suite"));
@@ -158,7 +158,7 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(suite))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -169,7 +169,7 @@ public class TestSuiteAndCaseApiTest {
                 mockMvc.perform(get("/api/projects/" + projectId + "/suites/" + created.id)
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").value(created.id))
                                 .andExpect(jsonPath("$.name").value("Get Test Suite"));
@@ -187,7 +187,7 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(suite))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -203,7 +203,7 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(testCase))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").exists())
                                 .andExpect(jsonPath("$.name").value("Login Test"));
@@ -220,7 +220,7 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(suite))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -236,14 +236,14 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(testCase))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk());
 
                 // List test cases
                 mockMvc.perform(get("/api/test-suites/" + createdSuite.id + "/tests")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$").isArray())
                                 .andExpect(jsonPath("$[0].name").value("List Test Case"));
@@ -254,7 +254,7 @@ public class TestSuiteAndCaseApiTest {
                 mockMvc.perform(get("/api/projects/" + projectId + "/tests")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$").isArray());
         }
@@ -270,7 +270,7 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(suite))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -286,7 +286,7 @@ public class TestSuiteAndCaseApiTest {
                                 .content(objectMapper.writeValueAsString(testCase))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -297,7 +297,7 @@ public class TestSuiteAndCaseApiTest {
                 mockMvc.perform(delete("/api/tests/" + createdTest.id)
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk());
         }
 }

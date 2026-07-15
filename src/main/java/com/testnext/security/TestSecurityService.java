@@ -29,6 +29,6 @@ public class TestSecurityService {
         if (tenantId == null)
             return false; // Orphaned test or not found
 
-        return tenantSecurity.isTestManagerForTenant(auth, tenantId);
+        return tenantSecurity.isTenantManagerForTenant(auth, tenantId);
     }
 }

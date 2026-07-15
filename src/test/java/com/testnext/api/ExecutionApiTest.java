@@ -56,7 +56,7 @@ public class ExecutionApiTest {
                 testManager.setUsername("tm_exec_" + UUID.randomUUID());
                 testManager.setEmail("tm_exec@example.com");
                 testManager.setHashedPassword("password123");
-                testManager.setRole("ROLE_TEST_MANAGER");
+                testManager.setRole("ROLE_TENANT_MANAGER");
 
                 MvcResult userResult = mockMvc.perform(post("/api/system/users")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -73,7 +73,7 @@ public class ExecutionApiTest {
                 TenantDto tenant = new TenantDto();
                 tenant.name = "Exec Test Tenant";
                 tenant.schemaName = "exec_schema_" + UUID.randomUUID().toString().replace("-", "");
-                tenant.testManagerId = createdManager.getId();
+                tenant.tenantManagerId = createdManager.getId();
 
                 MvcResult tenantResult = mockMvc.perform(post("/api/tenants")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -94,7 +94,7 @@ public class ExecutionApiTest {
                                 .content(objectMapper.writeValueAsString(project))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -111,7 +111,7 @@ public class ExecutionApiTest {
                                 .content(objectMapper.writeValueAsString(suite))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -128,7 +128,7 @@ public class ExecutionApiTest {
                                 .content(objectMapper.writeValueAsString(testCase))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -144,7 +144,7 @@ public class ExecutionApiTest {
                                 .content("{}")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").exists())
                                 .andExpect(jsonPath("$.status").exists());
@@ -157,7 +157,7 @@ public class ExecutionApiTest {
                                 .content("{\"suiteId\": " + suiteId + "}")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$").isArray());
         }
@@ -167,7 +167,7 @@ public class ExecutionApiTest {
                 mockMvc.perform(get("/api/executions")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$").isArray());
         }
@@ -177,7 +177,7 @@ public class ExecutionApiTest {
                 mockMvc.perform(get("/api/projects/" + projectId + "/executions")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$").isArray());
         }
@@ -190,7 +190,7 @@ public class ExecutionApiTest {
                                 .content("{}")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -201,7 +201,7 @@ public class ExecutionApiTest {
                 mockMvc.perform(get("/api/executions/" + executionId)
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").value(executionId));
         }
@@ -214,7 +214,7 @@ public class ExecutionApiTest {
                                 .content("{}")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -225,7 +225,7 @@ public class ExecutionApiTest {
                 mockMvc.perform(delete("/api/executions/" + executionId)
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk());
         }
 }

@@ -37,7 +37,7 @@ public class TenantApiTest {
         private WebApplicationContext webApplicationContext;
 
         private ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-        private UUID testManagerId;
+        private UUID tenantManagerId;
 
         @BeforeEach
         void setup() throws Exception {
@@ -50,7 +50,7 @@ public class TenantApiTest {
                 testManager.setUsername("tm_tenant_" + UUID.randomUUID());
                 testManager.setEmail("tm@example.com");
                 testManager.setHashedPassword("password123");
-                testManager.setRole("ROLE_TEST_MANAGER");
+                testManager.setRole("ROLE_TENANT_MANAGER");
 
                 MvcResult result = mockMvc.perform(post("/api/system/users")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -61,7 +61,7 @@ public class TenantApiTest {
 
                 SystemUser created = objectMapper.readValue(result.getResponse().getContentAsString(),
                                 SystemUser.class);
-                testManagerId = created.getId();
+                tenantManagerId = created.getId();
         }
 
         @Test
@@ -69,7 +69,7 @@ public class TenantApiTest {
                 TenantDto tenant = new TenantDto();
                 tenant.name = "Test Tenant " + UUID.randomUUID();
                 tenant.schemaName = "test_schema_" + UUID.randomUUID().toString().replace("-", "");
-                tenant.testManagerId = testManagerId;
+                tenant.tenantManagerId = tenantManagerId;
 
                 mockMvc.perform(post("/api/tenants")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -95,7 +95,7 @@ public class TenantApiTest {
                 TenantDto tenant = new TenantDto();
                 tenant.name = "Update Test Tenant";
                 tenant.schemaName = "update_schema_" + UUID.randomUUID().toString().replace("-", "");
-                tenant.testManagerId = testManagerId;
+                tenant.tenantManagerId = tenantManagerId;
 
                 MvcResult createResult = mockMvc.perform(post("/api/tenants")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -124,7 +124,7 @@ public class TenantApiTest {
                 TenantDto tenant = new TenantDto();
                 tenant.name = "Delete Test Tenant";
                 tenant.schemaName = "delete_schema_" + UUID.randomUUID().toString().replace("-", "");
-                tenant.testManagerId = testManagerId;
+                tenant.tenantManagerId = tenantManagerId;
 
                 MvcResult createResult = mockMvc.perform(post("/api/tenants")
                                 .contentType(MediaType.APPLICATION_JSON)

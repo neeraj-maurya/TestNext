@@ -10,7 +10,7 @@ import { useApi } from '../../hooks/useApi'
 export default function AdminTenantManagement() {
   const [tenants, setTenants] = useState([])
   const [users, setUsers] = useState([])
-  const [formData, setFormData] = useState({ name: '', schemaName: '', testManagerId: '', active: true })
+  const [formData, setFormData] = useState({ name: '', schemaName: '', tenantManagerId: '', active: true })
   const [openDialog, setOpenDialog] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const api = useApi()
@@ -52,12 +52,12 @@ export default function AdminTenantManagement() {
       setFormData({
         name: tenant.name,
         schemaName: tenant.schemaName,
-        testManagerId: tenant.testManagerId || '',
+        tenantManagerId: tenant.tenantManagerId || '',
         active: tenant.active !== undefined ? tenant.active : true
       })
       setEditingId(tenant.id)
     } else {
-      setFormData({ name: '', schemaName: '', testManagerId: '', active: true })
+      setFormData({ name: '', schemaName: '', tenantManagerId: '', active: true })
       setEditingId(null)
     }
     setOpenDialog(true)
@@ -65,7 +65,7 @@ export default function AdminTenantManagement() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false)
-    setFormData({ name: '', schemaName: '', testManagerId: '', active: true })
+    setFormData({ name: '', schemaName: '', tenantManagerId: '', active: true })
     setEditingId(null)
   }
 
@@ -77,7 +77,7 @@ export default function AdminTenantManagement() {
   const handleSave = async () => {
     try {
       const payload = { ...formData }
-      if (!payload.testManagerId) payload.testManagerId = null; // Send null to unassign
+      if (!payload.tenantManagerId) payload.tenantManagerId = null; // Send null to unassign
 
       if (editingId) {
         await api.put(`/api/tenants/${editingId}`, payload)
@@ -140,7 +140,7 @@ export default function AdminTenantManagement() {
                 <TableCell><strong>#</strong></TableCell>
                 <TableCell><strong>Name</strong></TableCell>
                 <TableCell><strong>Schema</strong></TableCell>
-                <TableCell><strong>Test Manager</strong></TableCell>
+                <TableCell><strong>Tenant Manager</strong></TableCell>
                 <TableCell><strong>Status</strong></TableCell>
                 <TableCell align="center"><strong>Actions</strong></TableCell>
               </TableRow>
@@ -151,7 +151,7 @@ export default function AdminTenantManagement() {
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{tenant.name}</TableCell>
                   <TableCell><code>{tenant.schemaName}</code></TableCell>
-                  <TableCell>{getManagerName(tenant.testManagerId)}</TableCell>
+                  <TableCell>{getManagerName(tenant.tenantManagerId)}</TableCell>
                   <TableCell>
                     <Chip
                       label={tenant.active ? 'Active' : 'Inactive'}
@@ -203,16 +203,16 @@ export default function AdminTenantManagement() {
               onChange={handleInputChange}
             />
             <FormControl fullWidth>
-              <InputLabel>Test Manager</InputLabel>
+              <InputLabel>Tenant Manager</InputLabel>
               <Select
-                name="testManagerId"
-                value={formData.testManagerId}
-                label="Test Manager"
+                name="tenantManagerId"
+                value={formData.tenantManagerId}
+                label="Tenant Manager"
                 onChange={handleInputChange}
               >
                 <MenuItem value=""><em>None</em></MenuItem>
                 {users
-                  .filter(u => u.role === 'ROLE_TEST_MANAGER' && u.tenantId === editingId)
+                  .filter(u => u.role === 'ROLE_TENANT_MANAGER' && u.tenantId === editingId)
                   .map(u => (
                     <MenuItem key={u.id} value={u.id}>
                       {u.username}

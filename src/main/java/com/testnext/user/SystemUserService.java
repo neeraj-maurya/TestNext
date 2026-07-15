@@ -25,7 +25,7 @@ public class SystemUserService {
     }
 
     private static final java.util.Set<String> ALLOWED_ROLES = java.util.Set.of(
-            "ROLE_SYSTEM_ADMIN", "ROLE_TEST_MANAGER", "ROLE_TEST_ENGINEER", "ROLE_VIEWER");
+            "ROLE_SYSTEM_ADMIN", "ROLE_TENANT_MANAGER", "ROLE_PROJECT_MANAGER", "ROLE_TEST_ENGINEER", "ROLE_VIEWER");
 
     private void validateRole(String role) {
         if (role != null && !ALLOWED_ROLES.contains(role)) {
@@ -62,7 +62,7 @@ public class SystemUserService {
     @Transactional
     public SystemUser update(UUID id, SystemUser in) {
         return repo.findById(id).map(u -> {
-            boolean wasManager = "ROLE_TEST_MANAGER".equals(u.getRole());
+            boolean wasManager = "ROLE_TENANT_MANAGER".equals(u.getRole());
             Long oldTenantId = u.getTenantId();
 
             // Handle Username Update
@@ -159,10 +159,10 @@ public class SystemUserService {
     // --- Tenant Manager Sync Logic ---
 
     private void syncTenantManagerOnCreate(SystemUser user) {
-        if ("ROLE_TEST_MANAGER".equals(user.getRole()) && user.getTenantId() != null) {
+        if ("ROLE_TENANT_MANAGER".equals(user.getRole()) && user.getTenantId() != null) {
             tenantRepo.findById(user.getTenantId()).ifPresent(t -> {
-                if (t.getTestManagerId() == null) {
-                    t.setTestManagerId(user.getId());
+                if (t.getTenantManagerId() == null) {
+                    t.setTenantManagerId(user.getId());
                     tenantRepo.save(t);
                 }
             });
@@ -170,7 +170,7 @@ public class SystemUserService {
     }
 
     private void syncTenantManagerOnUpdate(SystemUser user, boolean wasManager, Long oldTenantId) {
-        boolean isManager = "ROLE_TEST_MANAGER".equals(user.getRole());
+        boolean isManager = "ROLE_TENANT_MANAGER".equals(user.getRole());
 
         // Case 1: Tenant Change
         if (oldTenantId != null && !oldTenantId.equals(user.getTenantId())) {
@@ -192,7 +192,7 @@ public class SystemUserService {
     }
 
     private void syncTenantManagerOnDelete(SystemUser user) {
-        if ("ROLE_TEST_MANAGER".equals(user.getRole())) {
+        if ("ROLE_TENANT_MANAGER".equals(user.getRole())) {
             handleManagerRemoval(user.getTenantId(), user.getId());
         }
     }
@@ -202,17 +202,17 @@ public class SystemUserService {
             return;
 
         tenantRepo.findById(tenantId).ifPresent(t -> {
-            if (userId.equals(t.getTestManagerId())) {
+            if (userId.equals(t.getTenantManagerId())) {
                 // Determine new manager
                 UUID newManagerId = findReplacementManager(tenantId, userId);
-                t.setTestManagerId(newManagerId);
+                t.setTenantManagerId(newManagerId);
                 tenantRepo.save(t);
             }
         });
     }
 
     private UUID findReplacementManager(Long tenantId, UUID excludedUserId) {
-        List<SystemUser> managers = repo.findByTenantIdAndRole(tenantId, "ROLE_TEST_MANAGER");
+        List<SystemUser> managers = repo.findByTenantIdAndRole(tenantId, "ROLE_TENANT_MANAGER");
         return managers.stream()
                 .filter(u -> !u.getId().equals(excludedUserId) && u.isActive())
                 .findFirst()

@@ -5,7 +5,7 @@ public class TenantDto {
     public String name;
     public String schemaName;
 
-    public java.util.UUID testManagerId;
+    public java.util.UUID tenantManagerId;
     public boolean active = true;
 
     public TenantDto() {
@@ -17,15 +17,15 @@ public class TenantDto {
         this.schemaName = schemaName;
     }
 
-    public TenantDto(Long id, String name, String schemaName, java.util.UUID testManagerId) {
-        this(id, name, schemaName, testManagerId, true);
+    public TenantDto(Long id, String name, String schemaName, java.util.UUID tenantManagerId) {
+        this(id, name, schemaName, tenantManagerId, true);
     }
 
-    public TenantDto(Long id, String name, String schemaName, java.util.UUID testManagerId, boolean active) {
+    public TenantDto(Long id, String name, String schemaName, java.util.UUID tenantManagerId, boolean active) {
         this.id = id;
         this.name = name;
         this.schemaName = schemaName;
-        this.testManagerId = testManagerId;
+        this.tenantManagerId = tenantManagerId;
         this.active = active;
     }
 }

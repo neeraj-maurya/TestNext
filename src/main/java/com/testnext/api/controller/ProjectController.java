@@ -18,24 +18,36 @@ public class ProjectController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or @tenantSecurity.isTestManagerForTenant(authentication, #tenantId)")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or @tenantSecurity.isTenantManagerForTenant(authentication, #tenantId)")
     public ProjectDto create(@PathVariable Long tenantId, @RequestBody ProjectDto in) {
-        return svc.create(in.name, in.description);
+        return svc.create(tenantId, in.name, in.description);
     }
 
     @GetMapping
     @PreAuthorize("@tenantSecurity.isMember(authentication, #tenantId)")
     public List<ProjectDto> list(@PathVariable Long tenantId, org.springframework.security.core.Authentication auth) {
-        String username = auth.getName();
         String role = auth.getAuthorities().stream().findFirst().map(Object::toString).orElse("");
-        return svc.listAll(role, getUserId(auth));
+        return svc.listAll(tenantId, role, getUserId(auth));
+    }
+
+    @DeleteMapping("/{projectId}")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or @tenantSecurity.isTenantManagerForTenant(authentication, #tenantId)")
+    public void delete(@PathVariable Long tenantId, @PathVariable Long projectId) {
+        svc.delete(projectId);
     }
 
     @PutMapping("/{projectId}/assignments")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or @tenantSecurity.isTestManagerForTenant(authentication, #tenantId)")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or @tenantSecurity.isTenantManagerForTenant(authentication, #tenantId)")
     public void updateAssignments(@PathVariable Long tenantId, @PathVariable Long projectId,
             @RequestBody List<java.util.UUID> userIds) {
         svc.updateAssignments(projectId, userIds);
+    }
+
+    @PutMapping("/{projectId}/manager")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public void updateProjectManager(@PathVariable Long tenantId, @PathVariable Long projectId,
+            @RequestBody java.util.UUID projectManagerId) {
+        svc.updateProjectManager(projectId, projectManagerId);
     }
 
     // Quick helper to fetch ID - In real app, put in base controller or util

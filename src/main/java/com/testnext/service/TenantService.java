@@ -32,7 +32,7 @@ public class TenantService {
 
     @Transactional
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
-    public TenantDto create(String name, String schemaName, java.util.UUID testManagerId, boolean active) {
+    public TenantDto create(String name, String schemaName, java.util.UUID tenantManagerId, boolean active) {
         TenantEntity e = new TenantEntity();
         e.setName(name);
         String safeSchema = schemaName == null ? name.toLowerCase().replaceAll("[^a-z0-9_]+", "_") : schemaName;
@@ -40,7 +40,7 @@ public class TenantService {
             throw new IllegalArgumentException("Invalid schema name format: " + safeSchema);
         }
         e.setSchemaName(safeSchema);
-        e.setTestManagerId(testManagerId);
+        e.setTenantManagerId(tenantManagerId);
         e.setActive(active);
 
         TenantEntity saved = repo.save(e);
@@ -48,19 +48,19 @@ public class TenantService {
         // Initialize schema
         schemaInitializer.initialize(safeSchema);
 
-        return new TenantDto(saved.getId(), saved.getName(), saved.getSchemaName(), saved.getTestManagerId(),
+        return new TenantDto(saved.getId(), saved.getName(), saved.getSchemaName(), saved.getTenantManagerId(),
                 saved.isActive());
     }
 
     public List<TenantDto> list() {
         return repo.findAll().stream()
-                .map(e -> new TenantDto(e.getId(), e.getName(), e.getSchemaName(), e.getTestManagerId(), e.isActive()))
+                .map(e -> new TenantDto(e.getId(), e.getName(), e.getSchemaName(), e.getTenantManagerId(), e.isActive()))
                 .collect(Collectors.toList());
     }
 
     @Transactional
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
-    public TenantDto update(Long id, String name, String schemaName, java.util.UUID testManagerId, Boolean active) {
+    public TenantDto update(Long id, String name, String schemaName, java.util.UUID tenantManagerId, Boolean active) {
         var opt = repo.findById(id);
         if (opt.isEmpty())
             return null;
@@ -70,14 +70,14 @@ public class TenantService {
         if (schemaName != null)
             e.setSchemaName(schemaName);
 
-        // Allow unsetting testManagerId (nullable)
-        e.setTestManagerId(testManagerId);
+        // Allow unsetting tenantManagerId (nullable)
+        e.setTenantManagerId(tenantManagerId);
 
         if (active != null)
             e.setActive(active);
 
         TenantEntity saved = repo.save(e);
-        return new TenantDto(saved.getId(), saved.getName(), saved.getSchemaName(), saved.getTestManagerId(),
+        return new TenantDto(saved.getId(), saved.getName(), saved.getSchemaName(), saved.getTenantManagerId(),
                 saved.isActive());
     }
 

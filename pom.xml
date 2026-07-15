@@ -8,16 +8,16 @@
 
   <properties>
     <java.version>24</java.version>
-    <spring.boot.version>4.0.0</spring.boot.version>
+    <spring.boot.version>4.1.0</spring.boot.version>
     <spring-cloud.version>2024.0.0</spring-cloud.version>
-    <native.maven.plugin.version>0.10.2</native.maven.plugin.version>
     <quality.strict>false</quality.strict>
+    <maven.compiler.release>${java.version}</maven.compiler.release>
   </properties>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.0</version>
+    <version>4.1.0</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -29,12 +29,10 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
-      <version>1.14.0</version>
     </dependency>
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-tracing-bridge-brave</artifactId>
-      <version>1.4.0</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -71,7 +69,6 @@
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
-      <version>2.2.220</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -91,7 +88,6 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
-      <version>5.4.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -116,16 +112,7 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <release>${java.version}</release>
-        </configuration>
-      </plugin>
+
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
@@ -133,7 +120,6 @@
       <plugin>
         <groupId>org.graalvm.buildtools</groupId>
         <artifactId>native-maven-plugin</artifactId>
-        <version>${native.maven.plugin.version}</version>
         <extensions>true</extensions>
       </plugin>
     </plugins>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import {
   Card, CardContent, CardHeader, TextField, Button, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Box, Dialog, DialogTitle, DialogContent,
-  DialogActions, IconButton, Chip
+  DialogActions, IconButton, Chip, MenuItem
 } from '@mui/material'
 import { DeleteOutlined, EditOutlined, PlayArrowOutlined } from '@mui/icons-material'
 import { useApi } from '../../hooks/useApi'
@@ -10,15 +10,26 @@ import { useApi } from '../../hooks/useApi'
 
 export default function AdminTestSuites() {
   const [suites, setSuites] = useState([])
+  const [tenants, setTenants] = useState([])
   const [loadError, setLoadError] = useState('')
-  const [formData, setFormData] = useState({ name: '', description: '', projectId: 1 })
+  const [formData, setFormData] = useState({ name: '', description: '', projectId: 1, tenantId: '' })
   const [openDialog, setOpenDialog] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const api = useApi()
 
   useEffect(() => {
     fetchSuites()
+    fetchTenants()
   }, [])
+
+  const fetchTenants = async () => {
+    try {
+      const response = await api.get('/api/tenants')
+      setTenants(Array.isArray(response) ? response : (response?.value || []))
+    } catch (error) {
+      console.error('Error fetching tenants:', error)
+    }
+  }
 
   const fetchSuites = async () => {
     try {
@@ -33,10 +44,10 @@ export default function AdminTestSuites() {
 
   const handleOpenDialog = (suite = null) => {
     if (suite) {
-      setFormData({ name: suite.name, description: suite.description, projectId: suite.projectId || 1 })
+      setFormData({ name: suite.name, description: suite.description, projectId: suite.projectId || 1, tenantId: suite.tenantId || '' })
       setEditingId(suite.id)
     } else {
-      setFormData({ name: '', description: '', projectId: 1 })
+      setFormData({ name: '', description: '', projectId: 1, tenantId: '' })
       setEditingId(null)
     }
     setOpenDialog(true)
@@ -44,7 +55,7 @@ export default function AdminTestSuites() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false)
-    setFormData({ name: '', description: '', projectId: 1 })
+    setFormData({ name: '', description: '', projectId: 1, tenantId: '' })
     setEditingId(null)
   }
 
@@ -160,6 +171,8 @@ export default function AdminTestSuites() {
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                 <TableCell><strong>ID</strong></TableCell>
+                <TableCell><strong>Tenant</strong></TableCell>
+                <TableCell><strong>Project</strong></TableCell>
                 <TableCell><strong>Name</strong></TableCell>
                 <TableCell><strong>Description</strong></TableCell>
                 <TableCell><strong>Test Count</strong></TableCell>
@@ -171,6 +184,8 @@ export default function AdminTestSuites() {
               {suites.map(suite => (
                 <TableRow key={suite.id}>
                   <TableCell>{suite.id}</TableCell>
+                  <TableCell>{tenants.find(t => t.id === suite.tenantId)?.name || suite.tenantId || '-'}</TableCell>
+                  <TableCell>{suite.projectName || `Project ${suite.projectId}`}</TableCell>
                   <TableCell><strong>{suite.name}</strong></TableCell>
                   <TableCell>{suite.description}</TableCell>
                   <TableCell>
@@ -238,11 +253,17 @@ export default function AdminTestSuites() {
             />
             <TextField
               fullWidth
-              label="Tenant ID"
+              select
+              label="Tenant"
               name="tenantId"
               value={formData.tenantId}
               onChange={handleInputChange}
-            />
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {tenants.map(t => (
+                <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+              ))}
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions>

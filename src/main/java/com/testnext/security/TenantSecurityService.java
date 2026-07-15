@@ -47,7 +47,7 @@ public class TenantSecurityService {
             return true;
         }
 
-        return isTestManagerForTenant(auth, tenantId);
+        return isTenantManagerForTenant(auth, tenantId);
     }
 
     public boolean hasAccess(Authentication auth, Long tenantId) {
@@ -60,15 +60,15 @@ public class TenantSecurityService {
         if (isAdmin)
             return true;
 
-        // Check if user is Test Manager of this tenant
+        // Check if user is Tenant Manager of this tenant
         String username = auth.getName();
         Optional<SystemUser> userOpt = userRepo.findByUsername(username);
         if (userOpt.isEmpty())
             return false;
 
         SystemUser user = userOpt.get();
-        // Must be Test Manager
-        if (!"TEST_MANAGER".equals(user.getRole()) && !"ROLE_TEST_MANAGER".equals(user.getRole())) {
+        // Must be Tenant Manager
+        if (!"TENANT_MANAGER".equals(user.getRole()) && !"ROLE_TENANT_MANAGER".equals(user.getRole())) {
             return false;
         }
 
@@ -77,10 +77,10 @@ public class TenantSecurityService {
             return false;
 
         TenantEntity tenant = tenantOpt.get();
-        return user.getId().equals(tenant.getTestManagerId());
+        return user.getId().equals(tenant.getTenantManagerId());
     }
 
-    public boolean isTestManagerForTenant(Authentication auth, Long tenantId) {
+    public boolean isTenantManagerForTenant(Authentication auth, Long tenantId) {
         return hasAccess(auth, tenantId);
     }
 }

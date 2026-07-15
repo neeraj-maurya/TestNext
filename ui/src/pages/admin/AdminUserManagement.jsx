@@ -10,8 +10,9 @@ import { useApi } from '../../hooks/useApi'
 export default function AdminUserManagement() {
   const [users, setUsers] = useState([])
   const [tenants, setTenants] = useState([])
+  const [projects, setProjects] = useState([])
   const [formData, setFormData] = useState({
-    username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: ''
+    username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: '', projectId: ''
   })
   const [openDialog, setOpenDialog] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -19,7 +20,7 @@ export default function AdminUserManagement() {
 
   useEffect(() => {
     fetchUsers()
-    fetchTenants()
+    fetchTenantsAndProjects()
   }, [])
 
   const fetchUsers = async () => {
@@ -32,13 +33,25 @@ export default function AdminUserManagement() {
     }
   }
 
-  const fetchTenants = async () => {
+  const fetchTenantsAndProjects = async () => {
     try {
       const data = await api.get('/api/tenants')
       const list = Array.isArray(data) ? data : (data?.value || data)
       setTenants(list)
+
+      const allProjects = []
+      for (const t of list) {
+        try {
+          const pResponse = await api.get(`/api/tenants/${t.id}/projects`)
+          const pList = Array.isArray(pResponse) ? pResponse : []
+          pList.forEach(p => allProjects.push({ ...p, tenantId: t.id }))
+        } catch (e) {
+          console.error(`Failed to load projects for tenant ${t.id}`, e)
+        }
+      }
+      setProjects(allProjects)
     } catch (error) {
-      console.error('Error fetching tenants:', error)
+      console.error('Error fetching tenants/projects:', error)
     }
   }
 
@@ -48,15 +61,16 @@ export default function AdminUserManagement() {
         username: user.username || '',
         email: user.email || '',
         password: '',
-        displayName: user.display_name || user.displayName || '', // Fix display name read
+        displayName: user.display_name || user.displayName || '',
         role: user.role || 'ROLE_VIEWER',
         status: user.active ? 'active' : 'inactive',
-        tenantId: user.tenantId || ''
+        tenantId: user.tenantId || '',
+        projectId: '' // Cannot easily extract projectId backwards since it's on project side
       })
       setEditingId(user.id)
     } else {
       setFormData({
-        username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: ''
+        username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: '', projectId: ''
       })
       setEditingId(null)
     }
@@ -65,7 +79,7 @@ export default function AdminUserManagement() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false)
-    setFormData({ username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: '' })
+    setFormData({ username: '', email: '', password: '', displayName: '', role: 'ROLE_VIEWER', status: 'active', tenantId: '', projectId: '' })
     setEditingId(null)
   }
 
@@ -85,27 +99,64 @@ export default function AdminUserManagement() {
       return
     }
 
-    // Client-side Tenant Validation
-    if (formData.role !== 'ROLE_SYSTEM_ADMIN' && !formData.tenantId) {
-      alert('Tenant is required for non-admin users.')
+    // Client-side Tenant and Project Validation
+    const isProjectRole = ['ROLE_PROJECT_MANAGER', 'ROLE_TEST_ENGINEER', 'ROLE_VIEWER'].includes(formData.role)
+    const isTenantRole = formData.role === 'ROLE_TENANT_MANAGER'
+
+    if ((isTenantRole || isProjectRole) && !formData.tenantId) {
+      alert('Tenant is required for this role.')
       return
+    }
+
+    if (isProjectRole && !formData.projectId) {
+      alert('Project is required for this role.')
+      return
+    }
+
+    if (formData.role === 'ROLE_PROJECT_MANAGER' && formData.projectId) {
+      const proj = projects.find(p => p.id === formData.projectId)
+      if (proj && proj.projectManagerId && proj.projectManagerId !== editingId) {
+        alert('This project already has a Project Manager assigned. You must demote the existing one first.')
+        return
+      }
     }
 
     try {
       const payload = {
         ...formData,
         active: formData.status === 'active',
-        // Backend expects tenantId as null if empty string, or appropriate Long
         tenantId: formData.tenantId ? parseInt(formData.tenantId) : null
       }
 
+      let userId = editingId;
       if (editingId) {
         await api.put(`/api/system/users/${editingId}`, payload)
       } else {
-        await api.post('/api/system/users', payload)
+        const res = await api.post('/api/system/users', payload)
+        userId = res.id
       }
+
+      // Handle project assignments if applicable
+      if (isProjectRole && formData.projectId && userId) {
+        const proj = projects.find(p => p.id === formData.projectId)
+        if (proj) {
+          if (formData.role === 'ROLE_PROJECT_MANAGER') {
+            await api.put(`/api/tenants/${formData.tenantId}/projects/${formData.projectId}/manager`, `"${userId}"`, {
+              headers: { 'Content-Type': 'application/json' }
+            })
+          } else {
+            // Assign test engineer or viewer
+            const existingUsers = proj.assignedUserIds || []
+            if (!existingUsers.includes(userId)) {
+              await api.put(`/api/tenants/${formData.tenantId}/projects/${formData.projectId}/assignments`, [...existingUsers, userId])
+            }
+          }
+        }
+      }
+
       handleCloseDialog()
       fetchUsers()
+      fetchTenantsAndProjects()
     } catch (error) {
       console.error('Error saving user:', error)
       alert('Failed to save user: ' + error.message)
@@ -230,7 +281,8 @@ export default function AdminUserManagement() {
               onChange={handleInputChange}
             >
               <MenuItem value="ROLE_SYSTEM_ADMIN">System Admin</MenuItem>
-              <MenuItem value="ROLE_TEST_MANAGER">Test Manager</MenuItem>
+              <MenuItem value="ROLE_TENANT_MANAGER">Tenant Manager</MenuItem>
+              <MenuItem value="ROLE_PROJECT_MANAGER">Project Manager</MenuItem>
               <MenuItem value="ROLE_TEST_ENGINEER">Test Engineer</MenuItem>
               <MenuItem value="ROLE_VIEWER">Viewer</MenuItem>
             </TextField>
@@ -249,6 +301,23 @@ export default function AdminUserManagement() {
               <MenuItem value=""><em>None (Global)</em></MenuItem>
               {tenants.map(t => (
                 <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              fullWidth
+              select
+              label="Project"
+              name="projectId"
+              value={formData.projectId}
+              onChange={handleInputChange}
+              required={['ROLE_PROJECT_MANAGER', 'ROLE_TEST_ENGINEER', 'ROLE_VIEWER'].includes(formData.role)}
+              disabled={!['ROLE_PROJECT_MANAGER', 'ROLE_TEST_ENGINEER', 'ROLE_VIEWER'].includes(formData.role) || !formData.tenantId}
+              helperText={['ROLE_PROJECT_MANAGER', 'ROLE_TEST_ENGINEER', 'ROLE_VIEWER'].includes(formData.role) ? 'Required for project-scoped roles' : 'Only applicable for project roles'}
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {projects.filter(p => p.tenantId === formData.tenantId).map(p => (
+                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
               ))}
             </TextField>
 

@@ -48,7 +48,7 @@ public class ExecutionSecurityService {
 
         SystemUser user = userOpt.get();
         // Must be Test Manager
-        if (!"TEST_MANAGER".equals(user.getRole()) && !"ROLE_TEST_MANAGER".equals(user.getRole())) {
+        if (!"TENANT_MANAGER".equals(user.getRole()) && !"ROLE_TENANT_MANAGER".equals(user.getRole())) {
             return false;
         }
 
@@ -57,6 +57,6 @@ public class ExecutionSecurityService {
             return false;
 
         TenantEntity tenant = tenantOpt.get();
-        return user.getId().equals(tenant.getTestManagerId());
+        return user.getId().equals(tenant.getTenantManagerId());
     }
 }

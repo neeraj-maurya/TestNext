@@ -79,9 +79,9 @@ public class TestService {
         com.testnext.model.TestSuiteEntity s = suiteRepo.findById(t.suiteId).orElse(null);
         if (s == null)
             return null;
-        String schema = com.testnext.tenant.TenantContext.getTenant().orElse(null);
-        if (schema == null) return null;
-        return tenantRepo.findBySchemaName(schema).map(tenant -> tenant.getId()).orElse(null);
+        com.testnext.project.entity.ProjectEntity p = projectRepo.findById(s.projectId).orElse(null);
+        if (p == null) return null;
+        return p.getTenantId();
     }
 
     public java.util.List<TestDto> listByProject(Long projectId) {

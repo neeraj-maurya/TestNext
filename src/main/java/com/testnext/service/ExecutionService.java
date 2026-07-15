@@ -79,9 +79,9 @@ public class ExecutionService {
         if (s == null)
             return null;
 
-        String schema = com.testnext.tenant.TenantContext.getTenant().orElse(null);
-        if (schema == null) return null;
-        return tenantRepo.findBySchemaName(schema).map(tenant -> tenant.getId()).orElse(null);
+        com.testnext.project.entity.ProjectEntity p = projectRepo.findById(s.projectId).orElse(null);
+        if (p == null) return null;
+        return p.getTenantId();
     }
 
     public List<ExecutionDto> startSuite(Long suiteId) {
@@ -203,11 +203,11 @@ public class ExecutionService {
 
         com.testnext.user.SystemUser user = userOpt.get();
         // If Test Manager, find their tenant
-        if ("TEST_MANAGER".equals(user.getRole()) || "ROLE_TEST_MANAGER".equals(user.getRole())) {
+        if ("TENANT_MANAGER".equals(user.getRole()) || "ROLE_TENANT_MANAGER".equals(user.getRole())) {
             java.util.Optional<com.testnext.tenant.entity.TenantEntity> tenantOpt = tenantRepo
-                    .findByTestManagerId(user.getId());
+                    .findByTenantManagerId(user.getId());
             if (tenantOpt.isPresent()) {
-                return execRepo.findByTenantId(tenantOpt.get().getId()).stream()
+                return execRepo.findAllSorted().stream()
                         .map(e -> toDto(e, false))
                         .collect(Collectors.toList());
             }

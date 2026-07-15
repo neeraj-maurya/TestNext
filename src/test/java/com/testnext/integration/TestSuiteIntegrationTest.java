@@ -42,7 +42,7 @@ public class TestSuiteIntegrationTest {
 
         private Long tenantId;
         private Long projectId;
-        private UUID testManagerId;
+        private UUID tenantManagerId;
         private String testManagerUsername;
 
         @BeforeEach
@@ -68,7 +68,7 @@ public class TestSuiteIntegrationTest {
                 tm.setUsername("tm_suite_test_" + UUID.randomUUID());
                 tm.setEmail("tm_" + UUID.randomUUID() + "@example.com");
                 tm.setHashedPassword("{noop}pass");
-                tm.setRole("ROLE_TEST_MANAGER");
+                tm.setRole("ROLE_TENANT_MANAGER");
 
                 MvcResult uRes = mockMvc.perform(post("/api/system/users")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -80,14 +80,14 @@ public class TestSuiteIntegrationTest {
 
                 SystemUser createdTm = objectMapper.readValue(uRes.getResponse().getContentAsString(),
                                 SystemUser.class);
-                testManagerId = createdTm.getId();
+                tenantManagerId = createdTm.getId();
                 testManagerUsername = createdTm.getUsername();
 
                 // 2. Create Tenant (as Admin)
                 TenantDto t = new TenantDto();
                 t.name = "Suite Test Tenant " + UUID.randomUUID();
-                t.schemaName = "suite_test_schema_" + UUID.randomUUID();
-                t.testManagerId = testManagerId;
+                t.schemaName = "suite_test_schema_" + UUID.randomUUID().toString().replace("-", "");
+                t.tenantManagerId = tenantManagerId;
 
                 MvcResult tRes = mockMvc.perform(post("/api/tenants")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +110,7 @@ public class TestSuiteIntegrationTest {
                                 .content(objectMapper.writeValueAsString(p))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -131,7 +131,7 @@ public class TestSuiteIntegrationTest {
                                 .content(objectMapper.writeValueAsString(s))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -142,7 +142,7 @@ public class TestSuiteIntegrationTest {
                 mockMvc.perform(get("/api/projects/" + projectId + "/suites")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$[0].id").value(createdSuite.id))
                                 .andExpect(jsonPath("$[0].name").value("Integration Suite"));
@@ -159,7 +159,7 @@ public class TestSuiteIntegrationTest {
                                 .content(objectMapper.writeValueAsString(s))
                                 .with(jwt().jwt(builder -> builder.subject("other_user").claim("username",
                                                 "other_user"))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isForbidden());
         }
 }

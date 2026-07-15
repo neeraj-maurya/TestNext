@@ -52,7 +52,7 @@ public class ProjectApiTest {
                 testManager.setUsername("tm_project_" + UUID.randomUUID());
                 testManager.setEmail("tm_project@example.com");
                 testManager.setHashedPassword("password123");
-                testManager.setRole("ROLE_TEST_MANAGER");
+                testManager.setRole("ROLE_TENANT_MANAGER");
 
                 MvcResult userResult = mockMvc.perform(post("/api/system/users")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -69,7 +69,7 @@ public class ProjectApiTest {
                 TenantDto tenant = new TenantDto();
                 tenant.name = "Project Test Tenant";
                 tenant.schemaName = "project_schema_" + UUID.randomUUID().toString().replace("-", "");
-                tenant.testManagerId = createdManager.getId();
+                tenant.tenantManagerId = createdManager.getId();
 
                 MvcResult tenantResult = mockMvc.perform(post("/api/tenants")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -94,7 +94,7 @@ public class ProjectApiTest {
                                 .content(objectMapper.writeValueAsString(project))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").exists())
                                 .andExpect(jsonPath("$.name").value("Test Project"))
@@ -113,14 +113,14 @@ public class ProjectApiTest {
                                 .content(objectMapper.writeValueAsString(project))
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk());
 
                 // List projects
                 mockMvc.perform(get("/api/tenants/" + tenantId + "/projects")
                                 .with(jwt().jwt(builder -> builder.subject(testManagerUsername).claim("username",
                                                 testManagerUsername))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$").isArray())
                                 .andExpect(jsonPath("$[0].name").value("List Test Project"));
@@ -137,7 +137,7 @@ public class ProjectApiTest {
                                 .content(objectMapper.writeValueAsString(project))
                                 .with(jwt().jwt(builder -> builder.subject("other_user").claim("username",
                                                 "other_user"))
-                                                .authorities(new SimpleGrantedAuthority("ROLE_TEST_MANAGER"))))
+                                                .authorities(new SimpleGrantedAuthority("ROLE_TENANT_MANAGER"))))
                                 .andExpect(status().isForbidden());
         }
 }

@@ -15,10 +15,32 @@ public class ProjectEntity {
     @Column(length = 1000)
     private String description;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+
+    @Column(name = "project_manager_id")
+    private java.util.UUID projectManagerId;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "project_assignments", joinColumns = @JoinColumn(name = "project_id"))
     @Column(name = "user_id")
     private java.util.Set<java.util.UUID> assignedUserIds = new java.util.HashSet<>();
+
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public java.util.UUID getProjectManagerId() {
+        return projectManagerId;
+    }
+
+    public void setProjectManagerId(java.util.UUID projectManagerId) {
+        this.projectManagerId = projectManagerId;
+    }
 
     public java.util.Set<java.util.UUID> getAssignedUserIds() {
         return assignedUserIds;
