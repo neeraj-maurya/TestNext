@@ -19,10 +19,10 @@ version: 1.1.0
 ---
 
 ## Workspace Layout & Key Paths
-- **Backend Java Code**: [src/main/java/com/testnext/](file:///c:/Users/neera/VSCodeProjects/TestNext/src/main/java/com/testnext/)
-- **Seed Files**: [src/main/resources/data-postgres.sql](file:///c:/Users/neera/VSCodeProjects/TestNext/src/main/resources/data-postgres.sql) (PostgreSQL), [src/main/resources/data-h2.sql](file:///c:/Users/neera/VSCodeProjects/TestNext/src/main/resources/data-h2.sql) (H2)
-- **Frontend App**: [ui/](file:///c:/Users/neera/VSCodeProjects/TestNext/ui/) — Vite + React proxying `/api` → `http://localhost:8080` via `ui/vite.config.js`
-- **Docker Compose**: [docker-compose.yml](file:///c:/Users/neera/VSCodeProjects/TestNext/docker-compose.yml) and [Dockerfile](file:///c:/Users/neera/VSCodeProjects/TestNext/Dockerfile)
+- **Backend Java Code**: [src/main/java/com/testnext/](file:///d:/Workspace/TestNext/src/main/java/com/testnext/)
+- **Seed Files**: [src/main/resources/data-postgres.sql](file:///d:/Workspace/TestNext/src/main/resources/data-postgres.sql) (PostgreSQL), [src/main/resources/data-h2.sql](file:///d:/Workspace/TestNext/src/main/resources/data-h2.sql) (H2)
+- **Frontend App**: [ui/](file:///d:/Workspace/TestNext/ui/) — Vite + React proxying `/api` → `http://localhost:8080` via `ui/vite.config.js`
+- **Docker Compose**: [docker-compose.yml](file:///d:/Workspace/TestNext/docker-compose.yml) and [Dockerfile](file:///d:/Workspace/TestNext/Dockerfile)
 
 ---
 

@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  */
 @Component
 public class SchemaNameValidator {
-    private static final Pattern SAFE = Pattern.compile("^[a-z][a-z0-9_]{1,60}$");
+    private static final Pattern SAFE = Pattern.compile("^[a-z0-9_]+$");
 
     private final JdbcTemplate centralJdbc; // connected to public schema (may be null in tests)
 

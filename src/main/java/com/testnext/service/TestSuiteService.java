@@ -56,8 +56,6 @@ public class TestSuiteService {
         s.projectId = e.projectId;
         s.name = e.name;
         s.description = e.description;
-        // Fetch tenantId from project
-        projectRepo.findById(e.projectId).ifPresent(p -> s.tenantId = p.getTenantId());
         return s;
     }
 }

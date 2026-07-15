@@ -23,29 +23,34 @@ public class TenantRoutingDataSource implements DataSource {
     @Override
     public Connection getConnection() throws SQLException {
         Connection c = delegate.getConnection();
-        TenantContext.getTenant().ifPresent(schema -> applyTenantSchema(c, schema));
-        return c;
+        applyTenantSchema(c, TenantContext.getTenant());
+        return new TenantAwareConnection(c);
     }
 
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
         Connection c = delegate.getConnection(username, password);
-        TenantContext.getTenant().ifPresent(schema -> applyTenantSchema(c, schema));
-        return c;
+        applyTenantSchema(c, TenantContext.getTenant());
+        return new TenantAwareConnection(c);
     }
 
-    private void applyTenantSchema(Connection c, String schema) {
-        try {
-            String safeSchema = schema;
-            if (schemaValidator != null) {
-                // sanitize and validate against central registry; will throw IllegalArgumentException if invalid
-                safeSchema = schemaValidator.sanitizeAndValidate(schema);
+    private void applyTenantSchema(Connection c, java.util.Optional<String> tenantContext) {
+        try (java.sql.Statement st = c.createStatement()) {
+            if (tenantContext.isPresent()) {
+                String schema = tenantContext.get();
+                String safeSchema = schema;
+                if (schemaValidator != null) {
+                    // sanitize and validate against central registry; will throw IllegalArgumentException if invalid
+                    safeSchema = schemaValidator.sanitizeAndValidate(schema);
+                } else {
+                    // Basic sanitation: lowercase and remove unsafe chars (best-effort). Prefer providing a SchemaNameValidator.
+                    safeSchema = schema.toLowerCase().replaceAll("[^a-z0-9_]+", "_");
+                }
+                // safeSchema should now match pattern [a-z0-9_]+
+                st.execute("SET search_path TO " + safeSchema + ",public");
             } else {
-                // Basic sanitation: lowercase and remove unsafe chars (best-effort). Prefer providing a SchemaNameValidator.
-                safeSchema = schema.toLowerCase().replaceAll("[^a-z0-9_]+", "_");
+                st.execute("SET search_path TO public");
             }
-            // safeSchema should now match pattern [a-z][a-z0-9_]*
-            c.createStatement().execute("SET search_path TO " + safeSchema + ",public");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

@@ -13,16 +13,19 @@ public class TestService {
     private final TestStepRepository stepRepo;
     private final com.testnext.repository.TestSuiteRepository suiteRepo;
     private final com.testnext.repository.ProjectRepository projectRepo;
+    private final com.testnext.repository.TenantRepository tenantRepo;
 
     public TestService(
             TestRepository repo,
             TestStepRepository stepRepo,
             com.testnext.repository.TestSuiteRepository suiteRepo,
-            com.testnext.repository.ProjectRepository projectRepo) {
+            com.testnext.repository.ProjectRepository projectRepo,
+            com.testnext.repository.TenantRepository tenantRepo) {
         this.repo = repo;
         this.stepRepo = stepRepo;
         this.suiteRepo = suiteRepo;
         this.projectRepo = projectRepo;
+        this.tenantRepo = tenantRepo;
     }
 
     private final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -76,7 +79,9 @@ public class TestService {
         com.testnext.model.TestSuiteEntity s = suiteRepo.findById(t.suiteId).orElse(null);
         if (s == null)
             return null;
-        return projectRepo.findById(s.projectId).map(p -> p.getTenantId()).orElse(null);
+        String schema = com.testnext.tenant.TenantContext.getTenant().orElse(null);
+        if (schema == null) return null;
+        return tenantRepo.findBySchemaName(schema).map(tenant -> tenant.getId()).orElse(null);
     }
 
     public java.util.List<TestDto> listByProject(Long projectId) {

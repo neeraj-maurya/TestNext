@@ -79,7 +79,9 @@ public class ExecutionService {
         if (s == null)
             return null;
 
-        return projectRepo.findById(s.projectId).map(p -> p.getTenantId()).orElse(null);
+        String schema = com.testnext.tenant.TenantContext.getTenant().orElse(null);
+        if (schema == null) return null;
+        return tenantRepo.findBySchemaName(schema).map(tenant -> tenant.getId()).orElse(null);
     }
 
     public List<ExecutionDto> startSuite(Long suiteId) {

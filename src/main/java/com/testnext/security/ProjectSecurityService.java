@@ -14,10 +14,13 @@ public class ProjectSecurityService {
 
     private final ProjectRepository projectRepo;
     private final TenantSecurityService tenantSecurity;
+    private final com.testnext.repository.TenantRepository tenantRepo;
 
-    public ProjectSecurityService(ProjectRepository projectRepo, TenantSecurityService tenantSecurity) {
+    public ProjectSecurityService(ProjectRepository projectRepo, TenantSecurityService tenantSecurity,
+            com.testnext.repository.TenantRepository tenantRepo) {
         this.projectRepo = projectRepo;
         this.tenantSecurity = tenantSecurity;
+        this.tenantRepo = tenantRepo;
     }
 
     public boolean hasAccess(Authentication auth, Long projectId) {
@@ -29,7 +32,10 @@ public class ProjectSecurityService {
             return false;
 
         ProjectEntity project = projectOpt.get();
-        // Delegate to TenantSecurityService using the project's tenantId
-        return tenantSecurity.hasAccess(auth, project.getTenantId());
+        // Delegate to TenantSecurityService using the resolved tenantId from context
+        String schema = com.testnext.tenant.TenantContext.getTenant().orElse(null);
+        if (schema == null) return false;
+        Long tenantId = tenantRepo.findBySchemaName(schema).map(t -> t.getId()).orElse(null);
+        return tenantSecurity.hasAccess(auth, tenantId);
     }
 }

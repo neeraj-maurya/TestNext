@@ -16,23 +16,22 @@ public class ProjectService {
         this.repo = repo;
     }
 
-    public ProjectDto create(Long tenantId, String name, String description) {
+    public ProjectDto create(String name, String description) {
         ProjectEntity e = new ProjectEntity();
-        e.setTenantId(tenantId);
         e.setName(name);
         e.setDescription(description);
         ProjectEntity saved = repo.save(e);
-        return new ProjectDto(saved.getId(), saved.getTenantId(), saved.getName(), saved.getDescription());
+        return new ProjectDto(saved.getId(), saved.getName(), saved.getDescription());
     }
 
-    public List<ProjectDto> listByTenant(Long tenantId, String role, java.util.UUID userId) {
+    public List<ProjectDto> listAll(String role, java.util.UUID userId) {
         // If user is Admin or Test Manager, return all. Else filter by assignment.
         // Assuming "ROLE_SYSTEM_ADMIN", "ROLE_TEST_MANAGER"
         boolean canViewAll = "ROLE_SYSTEM_ADMIN".equals(role) || "ROLE_TEST_MANAGER".equals(role);
 
-        return repo.findByTenantId(tenantId).stream()
+        return repo.findAll().stream()
                 .filter(p -> canViewAll || p.getAssignedUserIds().contains(userId))
-                .map(e -> new ProjectDto(e.getId(), e.getTenantId(), e.getName(), e.getDescription()))
+                .map(e -> new ProjectDto(e.getId(), e.getName(), e.getDescription()))
                 .collect(Collectors.toList());
     }
 

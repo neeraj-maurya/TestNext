@@ -17,13 +17,16 @@ public class TenantService {
 
     private final TenantRepository repo;
     private final SchemaInitializer schemaInitializer;
+    private final com.testnext.tenant.SchemaNameValidator schemaNameValidator;
 
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public TenantService(TenantRepository repo, SchemaInitializer schemaInitializer,
+            com.testnext.tenant.SchemaNameValidator schemaNameValidator,
             org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.repo = repo;
         this.schemaInitializer = schemaInitializer;
+        this.schemaNameValidator = schemaNameValidator;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -33,6 +36,9 @@ public class TenantService {
         TenantEntity e = new TenantEntity();
         e.setName(name);
         String safeSchema = schemaName == null ? name.toLowerCase().replaceAll("[^a-z0-9_]+", "_") : schemaName;
+        if (!schemaNameValidator.patternValid(safeSchema)) {
+            throw new IllegalArgumentException("Invalid schema name format: " + safeSchema);
+        }
         e.setSchemaName(safeSchema);
         e.setTestManagerId(testManagerId);
         e.setActive(active);
@@ -87,8 +93,7 @@ public class TenantService {
 
     private void dropSchema(String schemaName) {
         if (schemaName != null && !schemaName.isBlank()) {
-            // Validate schema name to prevent SQL injection (simple check)
-            if (!schemaName.matches("^[a-z0-9_]+$")) {
+            if (!schemaNameValidator.patternValid(schemaName)) {
                 throw new IllegalArgumentException("Invalid schema name");
             }
             // Use String.format for logging/debugging, but strictly validated

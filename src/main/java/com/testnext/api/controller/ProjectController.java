@@ -20,7 +20,7 @@ public class ProjectController {
     @PostMapping
     @PreAuthorize("hasRole('SYSTEM_ADMIN') or @tenantSecurity.isTestManagerForTenant(authentication, #tenantId)")
     public ProjectDto create(@PathVariable Long tenantId, @RequestBody ProjectDto in) {
-        return svc.create(tenantId, in.name, in.description);
+        return svc.create(in.name, in.description);
     }
 
     @GetMapping
@@ -28,7 +28,7 @@ public class ProjectController {
     public List<ProjectDto> list(@PathVariable Long tenantId, org.springframework.security.core.Authentication auth) {
         String username = auth.getName();
         String role = auth.getAuthorities().stream().findFirst().map(Object::toString).orElse("");
-        return svc.listByTenant(tenantId, role, getUserId(auth));
+        return svc.listAll(role, getUserId(auth));
     }
 
     @PutMapping("/{projectId}/assignments")
